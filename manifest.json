@@ -1,0 +1,19 @@
+{
+  "name": "CoreOS · Sistem və Şəbəkə Diaqnostikası",
+  "short_name": "CoreOS",
+  "dir": "ltr",
+  "orientation": "any",
+  "start_url": "/CoreOS/",
+  "scope": "/CoreOS/",
+  "display": "standalone",
+  "background_color": "#0c192c",
+  "theme_color": "#181c24",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/906/906324.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
