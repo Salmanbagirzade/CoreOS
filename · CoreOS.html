@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <title>Windows 11 · Sistem və Şəbəkə Diaqnostikası (Kşats-25/01)</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    html, body {
+      width: 100vw;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden !important;
+      user-select: none;
+      background: #0c192c;
+      color: #fff;
+    }
+
+    /* Təmiz Windows 11 Bloom tipli fon */
+    .win-wallpaper {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 25%, #1d4ed8 0%, #0f172a 48%, #060b16 100%);
+      z-index: 0;
+    }
+    .win-wallpaper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+
+    /* İş Masası Sahəsi */
+    .desktop-area {
+      position: relative;
+      z-index: 10;
+      width: 100vw;
+      height: calc(100dvh - 48px);
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    /* Windows İkon Sütunları */
+    .desktop-icons {
+      display: grid;
+      grid-flow: column;
+      grid-template-rows: repeat(5, 86px);
+      gap: 8px;
+    }
+    .win-icon {
+      width: 82px;
+      height: 82px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+      text-align: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .win-icon:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .win-icon:active { background: rgba(255, 255, 255, 0.2); }
+    .win-icon-glyph {
+      font-size: 28px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+    .win-icon-label {
+      font-size: 11.5px;
+      line-height: 1.2;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      word-break: break-word;
+    }
+
+    /* Sadə Windows Pəncərələri */
+    .win-window {
+      position: fixed;
+      top: 5%;
+      left: 8%;
+      width: 82%;
+      height: calc(100dvh - 100px);
+      min-width: 320px;
+      min-height: 280px;
+      background: #181c24;
+      border: 1px solid #333a48;
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .win-window.open { display: flex; }
+    .win-window.maximized {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: calc(100dvh - 48px) !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    .win-titlebar {
+      height: 34px;
+      background: #202530;
+      border-bottom: 1px solid #2e3543;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 12px;
+      cursor: move;
+      flex-shrink: 0;
+    }
+    .win-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .win-controls {
+      display: flex;
+      height: 100%;
+    }
+    .win-btn {
+      width: 44px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 13px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .win-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+    .win-btn.close:hover { background: #e81123; color: #fff; }
+
+    /* Windows Taskbar (48px) */
+    .win-taskbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48px;
+      background: rgba(24, 28, 36, 0.94);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+    .tb-left, .tb-center, .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tb-btn {
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tb-btn:hover { background: rgba(255, 255, 255, 0.08); }
+    .tb-btn.active { background: rgba(255, 255, 255, 0.12); border-bottom: 2px solid #38bdf8; }
+
+    /* Start Menu */
+    .win-start {
+      position: fixed;
+      bottom: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440px;
+      max-width: calc(100vw - 20px);
+      background: rgba(28, 33, 43, 0.97);
+      backdrop-filter: blur(24px);
+      border: 1px solid #384152;
+      border-radius: 10px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      z-index: 60;
+      padding: 18px;
+      display: none;
+    }
+    .win-start.open { display: block; }
+
+    /* Widgets Panel (İstəyə görə açılıb-bağlanan Windows 11 Widgets) */
+    .win-widgets {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      bottom: 58px;
+      width: 340px;
+      max-width: calc(100vw - 20px);
+      background: rgba(24, 29, 39, 0.95);
+      backdrop-filter: blur(24px);
+      border: 1px solid #384152;
+      border-radius: 10px;
+      z-index: 55;
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    }
+    .win-widgets.open { display: flex; }
+
+    /* Ümumi düymə və input stilləri */
+    .btn-primary {
+      background: #0067c0;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: #1975c5; }
+    .btn-ghost {
+      background: #282e3b;
+      color: #e2e8f0;
+      border: 1px solid #3b4354;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-ghost:hover { background: #323949; }
+
+    .card {
+      background: #202530;
+      border: 1px solid #2e3543;
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #0067c0;
+      color: #fff;
+    }
+    table.win-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    table.win-table th, table.win-table td {
+      border: 1px solid #333a48;
+      padding: 7px 9px;
+      text-align: left;
+    }
+    table.win-table th { background: #262c3a; color: #93c5fd; }
+
+    /* Lock Screen */
+    #win-lock {
+      position: fixed;
+      inset: 0;
+      background: #0b1322;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    #win-lock.active { display: flex; }
+  </style>
+</head>
+<body>
+  <!-- Divar Kağızı -->
+  <div class="win-wallpaper">
+    <img id="wallpaper-img" src="./İş masası · CoreOS_files/b70af5423f206cf35713a7de576c364b_coreos-wallpaper.jpg" alt="" onerror="this.style.display='none'">
+  </div>
+
+  <!-- İŞ MASASI -->
+  <div class="desktop-area">
+    <div class="desktop-icons">
+      <!-- 1. Mövzular & Diaqnostika Proqramı (Slayddakı bütün 10 bölmə) -->
+      <button class="win-icon" onclick="openWin('lessons')">
+        <span class="win-icon-glyph">📘</span>
+        <span class="win-icon-label">Mövzular & Test</span>
+      </button>
+
+      <!-- 2. Diaqnostika Köməkçisi (Nasazlıq Tapıcı) -->
+      <button class="win-icon" onclick="openWin('wizard')">
+        <span class="win-icon-glyph">🩺</span>
+        <span class="win-icon-label">Təmir Köməkçisi</span>
+      </button>
+
+      <!-- 3. CMD / Linux Terminal -->
+      <button class="win-icon" onclick="openWin('cmd')">
+        <span class="win-icon-glyph">⬛</span>
+        <span class="win-icon-label">CMD / Terminal</span>
+      </button>
+
+      <!-- 4. This PC (Fayllarım) -->
+      <button class="win-icon" onclick="openWin('explorer')">
+        <span class="win-icon-glyph">💻</span>
+        <span class="win-icon-label">This PC</span>
+      </button>
+
+      <!-- 5. Task Manager -->
+      <button class="win-icon" onclick="openWin('taskmgr')">
+        <span class="win-icon-glyph">📊</span>
+        <span class="win-icon-label">Task Manager</span>
+      </button>
+
+      <!-- 6. Device Manager -->
+      <button class="win-icon" onclick="openWin('devmgmt')">
+        <span class="win-icon-glyph">🔌</span>
+        <span class="win-icon-label">Device Manager</span>
+      </button>
+
+      <!-- 7. Event Viewer -->
+      <button class="win-icon" onclick="openWin('eventvwr')">
+        <span class="win-icon-glyph">📋</span>
+        <span class="win-icon-label">Event Viewer</span>
+      </button>
+
+      <!-- 8. Notepad -->
+      <button class="win-icon" onclick="openWin('notepad')">
+        <span class="win-icon-glyph">📝</span>
+        <span class="win-icon-label">Notepad</span>
+      </button>
+
+      <!-- 9. Kalkulyator -->
+      <button class="win-icon" onclick="openWin('calc')">
+        <span class="win-icon-glyph">🧮</span>
+        <span class="win-icon-label">Calculator</span>
+      </button>
+
+      <!-- 10. Settings -->
+      <button class="win-icon" onclick="openWin('settings')">
+        <span class="win-icon-glyph">⚙️</span>
+        <span class="win-icon-label">Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. PƏNCƏRƏ: MÖVZULAR, METODLAR VƏ BİLİK TESTİ (SLAYD ƏSASINDA) -->
+  <div id="win-lessons" class="win-window">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-lessons')">
+      <div class="win-title">📘 Sistem və Şəbəkə Nasazlıqlarının Diaqnostikası — ADPU Pedaqoji Kolleci (Kşats-25/01)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('lessons')">—</button>
+        <button class="win-btn" onclick="maxWin('win-lessons')">□</button>
+        <button class="win-btn close" onclick="closeWin('lessons')">✕</button>
+      </div>
+    </div>
+    <div style="display:flex; flex:1; overflow:hidden;">
+      <!-- Sol Mövzu Siyahısı -->
+      <div id="lesson-sidebar" style="width:245px; background:#141820; border-right:1px solid #2e3543; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; flex-shrink:0;">
+        <div style="font-size:11px; color:#94a3b8; padding:4px 6px; font-weight:600;">TƏDRİS MODULLARI (SLAYD)</div>
+        <!-- JS ilə doldurulur -->
+      </div>
+      <!-- Sağ Mövzu İzahı və Test -->
+      <div id="lesson-body" style="flex:1; padding:18px; overflow-y:auto; font-size:13px; line-height:1.55;">
+        <!-- JS ilə doldurulur -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PƏNCƏRƏ: İNTERAKTİV TƏMİR KÖMƏKÇİSİ (TROUBLESHOOTING WIZARD) -->
+  <div id="win-wizard" class="win-window" style="width:680px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-wizard')">
+      <div class="win-title">🩺 Windows Sistem & Şəbəkə Nasazlıq Təmir Köməkçisi</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('wizard')">—</button>
+        <button class="win-btn" onclick="maxWin('win-wizard')">□</button>
+        <button class="win-btn close" onclick="closeWin('wizard')">✕</button>
+      </div>
+    </div>
+    <div style="padding:18px; overflow-y:auto; flex:1; font-size:13px;">
+      <p style="margin-top:0; color:#93c5fd; font-weight:600;">Kompüterdə və ya şəbəkədə hansı nasazlıq baş verib? Seçin, dərhal diaqnostika və həll alqoritmini göstərim:</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px; margin-bottom:14px;">
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('net_apipa')">🌐 İnternet yoxdur / 169.254.x.x (APIPA)</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('ip_conflict')">⚠️ IP Address Conflict (ARP xətası)</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('bsod')">🟦 BSOD (Mavi Ekran) və Çökmələr</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('cpu_ram')">🔥 CPU 95% / RAM 100% / Qızma (>90°C)</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('disk')">💾 Disk xətası / Bad Sector / Yavaşlıq</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('no_boot')">⚡ PC açılmır / Ekrana görüntü gəlmir</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('driver')">🔌 Səs yoxdur / Sarı üçbucaq (Kod 28/43)</button>
+        <button class="btn-ghost" style="text-align:left;" onclick="showWizardFix('os_corrupt')">🛠️ Windows sistem faylları zədələnib</button>
+      </div>
+      <div id="wizard-output" class="card" style="line-height:1.6;">
+        Yuxarıdakı problemlərdən birini seçin — CompTIA və slayd metodologiyasına uyğun addım-addım təmir planı burada görünəcək.
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. PƏNCƏRƏ: WINDOWS CMD + LINUX BASH TERMİNAL -->
+  <div id="win-cmd" class="win-window">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-cmd')">
+      <div class="win-title">⬛ Command Prompt / Linux Terminal (Administrator)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('cmd')">—</button>
+        <button class="win-btn" onclick="maxWin('win-cmd')">□</button>
+        <button class="win-btn close" onclick="closeWin('cmd')">✕</button>
+      </div>
+    </div>
+    <div onclick="document.getElementById('cmd-in').focus()" style="flex:1; background:#0c0c0c; color:#cccccc; font-family:Consolas, monospace; font-size:12.5px; padding:14px; overflow-y:auto;">
+      <div id="cmd-out">
+        <div>Microsoft Windows [Version 10.0.22631] &amp; Linux Bash Hybrid Shell</div>
+        <div style="color:#38bdf8; margin-bottom:8px;">Slayddakı bütün diaqnostika əmrlərini sınaya bilərsiniz. Siyahı üçün <b>help</b> yazın.</div>
+      </div>
+      <form onsubmit="execCmd(event)" style="display:flex; gap:6px; margin-top:6px;">
+        <span style="color:#4ade80;">C:\Users\Salman&gt;</span>
+        <input id="cmd-in" type="text" autocomplete="off" style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-family:Consolas, monospace; font-size:12.5px;" placeholder="sfc /scannow, dism, chkdsk, ipconfig /all, arp -a, ping, nslookup, netstat -ano, ls, neofetch...">
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. PƏNCƏRƏ: THIS PC (FILE EXPLORER) -->
+  <div id="win-explorer" class="win-window" style="width:660px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-explorer')">
+      <div class="win-title">💻 This PC — Fayl Meneceri</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('explorer')">—</button>
+        <button class="win-btn" onclick="maxWin('win-explorer')">□</button>
+        <button class="win-btn close" onclick="closeWin('explorer')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12.5px;">
+      <div style="font-weight:600; color:#93c5fd; margin-bottom:8px;">Qurğular və Disklər (Devices and drives)</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:16px;">
+        <div class="card">
+          <div style="font-weight:600;">💿 Local Disk (C:) [NVMe SSD - NTFS]</div>
+          <div style="height:8px; background:#334155; border-radius:4px; margin:6px 0; overflow:hidden;">
+            <div style="width:42%; height:100%; background:#0078d4;"></div>
+          </div>
+          <div style="font-size:11px; color:#94a3b8;">296 GB boş / 512 GB · S.M.A.R.T: OK (38°C)</div>
+        </div>
+        <div class="card">
+          <div style="font-weight:600;">💾 Data (D:) [SATA HDD - NTFS]</div>
+          <div style="height:8px; background:#334155; border-radius:4px; margin:6px 0; overflow:hidden;">
+            <div style="width:65%; height:100%; background:#0078d4;"></div>
+          </div>
+          <div style="font-size:11px; color:#94a3b8;">350 GB boş / 1 TB · S.M.A.R.T: OK</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:600; color:#93c5fd;">Qovluqlar və Fayllar (C:\Users\Salman)</span>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-ghost" onclick="addVfsFolder()">+ Qovluq</button>
+          <button class="btn-ghost" onclick="addVfsFile()">+ Fayl</button>
+        </div>
+      </div>
+      <div id="vfs-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- 5. PƏNCƏRƏ: TASK MANAGER -->
+  <div id="win-taskmgr" class="win-window" style="width:620px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-taskmgr')">
+      <div class="win-title">📊 Task Manager (Ctrl + Shift + Esc)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('taskmgr')">—</button>
+        <button class="win-btn" onclick="maxWin('win-taskmgr')">□</button>
+        <button class="win-btn close" onclick="closeWin('taskmgr')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12px;">
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px;">
+        <div class="card"><b>CPU Yükü:</b> <span id="tm-cpu" style="color:#4ade80;">12%</span> <div style="font-size:10.5px; color:#94a3b8;">Norma: &lt;10% (boşda)</div></div>
+        <div class="card"><b>RAM İstifadəsi:</b> <span id="tm-ram" style="color:#38bdf8;">38% (6.1/16 GB)</span> <div style="font-size:10.5px; color:#94a3b8;">DDR5 4800 MHz</div></div>
+        <div class="card"><b>CPU Temperatur:</b> <span style="color:#4ade80;">46°C</span> <div style="font-size:10.5px; color:#94a3b8;">Optimum: 35°C–65°C</div></div>
+      </div>
+      <table class="win-table">
+        <thead><tr><th>Proses adı</th><th>Status</th><th>CPU</th><th>Memory</th><th>Əməliyyat</th></tr></thead>
+        <tbody id="tm-tbody">
+          <tr><td>System Idle / Kernel</td><td>Running</td><td>2.1%</td><td>120 MB</td><td style="color:#64748b;">Sistem</td></tr>
+          <tr><td>Windows Explorer (explorer.exe)</td><td>Running</td><td>1.4%</td><td>85 MB</td><td><button class="btn-ghost" onclick="alert('Windows Explorer yenidən başladıldı!')">Restart</button></td></tr>
+          <tr id="proc-heavy"><td>HeavyRenderApp.exe</td><td style="color:#f87171;">Not Responding</td><td style="color:#f87171;">84.0%</td><td style="color:#f87171;">4.2 GB</td><td><button class="btn-primary" style="background:#dc2626;" onclick="document.getElementById('proc-heavy').remove(); document.getElementById('tm-cpu').textContent='9%';">End Task</button></td></tr>
+          <tr><td>svchost.exe (Windows Audio)</td><td>Running</td><td>0.3%</td><td>34 MB</td><td><button class="btn-ghost" onclick="alert('Windows Audio xidməti yenidən başladıldı!')">Restart</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. PƏNCƏRƏ: DEVICE MANAGER -->
+  <div id="win-devmgmt" class="win-window" style="width:580px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-devmgmt')">
+      <div class="win-title">🔌 Device Manager (devmgmt.msc)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('devmgmt')">—</button>
+        <button class="win-btn close" onclick="closeWin('devmgmt')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12.5px;">
+      <p style="margin-top:0; color:#94a3b8;">Sarı nida işarəli (Kod 28 / Kod 43) cihazların üzərinə klikləyərək WHQL drayverini yeniləyin:</p>
+      <div class="card" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div>🖥️ <b>Display adapters:</b> Intel(R) Graphics — <span style="color:#4ade80;">Normal işləyir</span></div>
+      </div>
+      <div class="card" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div>🌐 <b>Network adapters:</b> Realtek PCIe GbE Family Controller — <span style="color:#4ade80;">Normal işləyir</span></div>
+      </div>
+      <div id="dev-warn-box" class="card" style="margin-bottom:8px; border-color:#f59e0b; display:flex; justify-content:space-between; align-items:center;">
+        <div>⚠️ <b>Other devices:</b> Unknown Device (VEN_8086&amp;DEV_51C8 · Kod 28)</div>
+        <button class="btn-primary" onclick="document.getElementById('dev-warn-box').innerHTML='✅ <b>System devices:</b> Intel Serial IO Controller — WHQL Drayver uğurla quraşdırıldı!'; document.getElementById('dev-warn-box').style.borderColor='#22c55e';">Update Driver</button>
+      </div>
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>🔊 <b>Sound, video and game controllers:</b> Realtek Audio — <span style="color:#4ade80;">Aktiv</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. PƏNCƏRƏ: EVENT VIEWER -->
+  <div id="win-eventvwr" class="win-window" style="width:620px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-eventvwr')">
+      <div class="win-title">📋 Event Viewer (eventvwr.msc) — Windows Logs → System</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('eventvwr')">—</button>
+        <button class="win-btn close" onclick="closeWin('eventvwr')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12px;">
+      <table class="win-table">
+        <thead><tr><th>Səviyyə</th><th>Mənbə (Source)</th><th>Event ID</th><th>İzah</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#f87171; font-weight:600;">Critical</td><td>Kernel-Power</td><td><b>41</b></td><td>Sistem gözlənilmədən sönüb və ya yenidən başlayıb (PSU / Qızma).</td></tr>
+          <tr><td style="color:#f87171; font-weight:600;">Error</td><td>BugCheck</td><td><b>1001</b></td><td>BSOD Mavi Ekran qeydə alınıb (C:\Windows\Minidump\*.dmp).</td></tr>
+          <tr><td style="color:#fbbf24; font-weight:600;">Warning</td><td>DNS Client Events</td><td><b>1014</b></td><td>Domen adının həlli zamanı vaxt aşımı (ipconfig /flushdns).</td></tr>
+          <tr><td style="color:#38bdf8;">Information</td><td>Wininit</td><td><b>1001</b></td><td>CHKDSK disk yoxlanışı hesabatı tamamlandı.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 8. PƏNCƏRƏ: NOTEPAD -->
+  <div id="win-notepad" class="win-window" style="width:520px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-notepad')">
+      <div class="win-title">📝 Notepad</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('notepad')">—</button>
+        <button class="win-btn close" onclick="closeWin('notepad')">✕</button>
+      </div>
+    </div>
+    <div style="padding:8px; background:#202530; border-bottom:1px solid #2e3543; display:flex; gap:8px;">
+      <input id="np-name" value="hesabat.txt" style="background:#141820; border:1px solid #333a48; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; width:150px;">
+      <button class="btn-primary" onclick="saveNp()">Yadda saxla</button>
+    </div>
+    <textarea id="np-text" style="flex:1; background:#141820; color:#e2e8f0; border:none; outline:none; padding:12px; font-family:Consolas, monospace; font-size:12.5px; resize:none;" placeholder="Diaqnostika hesabatını və ya qeydlərinizi yazın..."></textarea>
+  </div>
+
+  <!-- 9. PƏNCƏRƏ: CALCULATOR -->
+  <div id="win-calc" class="win-window" style="width:280px; height:360px;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-calc')">
+      <div class="win-title">🧮 Calculator</div>
+      <div class="win-controls">
+        <button class="win-btn close" onclick="closeWin('calc')">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px; display:flex; flex-direction:column; flex:1; gap:8px;">
+      <input id="calc-disp" readonly value="0" style="width:100%; background:#0f131a; border:1px solid #333a48; color:#fff; font-size:22px; text-align:right; padding:10px; border-radius:6px; font-family:Consolas, monospace;">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; flex:1;">
+        <button class="btn-ghost" onclick="cClr()">C</button><button class="btn-ghost" onclick="cAdd('(')">(</button><button class="btn-ghost" onclick="cAdd(')')">)</button><button class="btn-ghost" onclick="cAdd('/')">÷</button>
+        <button class="btn-ghost" onclick="cAdd('7')">7</button><button class="btn-ghost" onclick="cAdd('8')">8</button><button class="btn-ghost" onclick="cAdd('9')">9</button><button class="btn-ghost" onclick="cAdd('*')">×</button>
+        <button class="btn-ghost" onclick="cAdd('4')">4</button><button class="btn-ghost" onclick="cAdd('5')">5</button><button class="btn-ghost" onclick="cAdd('6')">6</button><button class="btn-ghost" onclick="cAdd('-')">−</button>
+        <button class="btn-ghost" onclick="cAdd('1')">1</button><button class="btn-ghost" onclick="cAdd('2')">2</button><button class="btn-ghost" onclick="cAdd('3')">3</button><button class="btn-ghost" onclick="cAdd('+')">+</button>
+        <button class="btn-ghost" style="grid-column:span 2;" onclick="cAdd('0')">0</button><button class="btn-ghost" onclick="cAdd('.')">.</button><button class="btn-primary" onclick="cEq()">=</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. PƏNCƏRƏ: WINDOWS SETTINGS -->
+  <div id="win-settings" class="win-window" style="width:580px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-settings')">
+      <div class="win-title">⚙️ Settings — System & Personalization</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('settings')">—</button>
+        <button class="win-btn close" onclick="closeWin('settings')">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px; display:flex; flex-direction:column; gap:12px;">
+      <div class="card">
+        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">💻 Sistem Haqqında (About)</div>
+        <div><b>Tələbə:</b> Salman Bağırzadə Mehman · <b>Qrup:</b> Kşats-25/01</div>
+        <div><b>Müəssisə:</b> ADPU-nun nəzdində Azərbaycan Dövlət Pedaqoji Kolleci</div>
+        <div><b>Fənn müəllimi:</b> Samirə Kərimova</div>
+        <div><b>Cihaz:</b> ASUS Vivobook S16 · Intel Core 5 210H · 16 GB DDR5 · Windows 11</div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">🖼️ Divar Kağızı (Background)</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 20% 25%, #1d4ed8 0%, #0f172a 48%, #060b16 100%)')">Windows 11 Göy</button>
+          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 80% 20%, #0f766e 0%, #0f172a 55%, #050a14 100%)')">Zümrüd</button>
+          <button class="btn-ghost" onclick="setBg('#0a0e17')">Minimalist Tünd</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">🔒 Kilid Ekranı PIN Kodu</div>
+        <div style="display:flex; gap:8px;">
+          <input id="pin-set" type="password" placeholder="PIN (məs: 1234)" style="background:#141820; border:1px solid #333a48; color:#fff; padding:6px 10px; border-radius:4px;">
+          <button class="btn-primary" onclick="savePin()">Saxla</button>
+          <button class="btn-ghost" onclick="lockPc()">Kilidlə</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINDOWS 11 WIDGETS PANELİ (İSTƏYƏ GÖRƏ QOY / ÇIXAR) -->
+  <aside id="win-widgets" class="win-widgets">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2e3543; padding-bottom:8px;">
+      <span style="font-weight:600; font-size:13px;">🧩 Windows Widgets</span>
+      <button class="btn-ghost" style="padding:2px 8px;" onclick="toggleWidgets()">✕</button>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:5px;">
+      <button class="btn-ghost" style="font-size:11px; padding:4px 8px;" onclick="toggleWItem('wg-score')">+ Test Nəticəsi</button>
+      <button class="btn-ghost" style="font-size:11px; padding:4px 8px;" onclick="toggleWItem('wg-hw')">+ Sistem Vəziyyəti</button>
+      <button class="btn-ghost" style="font-size:11px; padding:4px 8px;" onclick="toggleWItem('wg-weather')">+ Hava</button>
+      <button class="btn-ghost" style="font-size:11px; padding:4px 8px;" onclick="toggleWItem('wg-note')">+ Sürətli Qeyd</button>
+    </div>
+
+    <div id="wg-score" class="card">
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8;">
+        <span>🎓 Mövzu Mənimsəmə Faizi</span>
+        <span style="cursor:pointer; color:#f87171;" onclick="toggleWItem('wg-score')">Çıxar</span>
+      </div>
+      <div id="wg-pct" style="font-size:24px; font-weight:700; color:#38bdf8; margin:4px 0;">0%</div>
+      <div id="wg-sub" style="font-size:11px; color:#cbd5e1;">0 / 16 Test sualı cavablanıb</div>
+    </div>
+
+    <div id="wg-hw" class="card">
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8;">
+        <span>⚡ Kompüter Sağlamlığı</span>
+        <span style="cursor:pointer; color:#f87171;" onclick="toggleWItem('wg-hw')">Çıxar</span>
+      </div>
+      <div style="font-size:12px; margin-top:6px; line-height:1.6;">
+        <div>CPU: <b>12%</b> (46°C · Normal)</div>
+        <div>RAM: <b>6.1 / 16 GB</b> (38%)</div>
+        <div>NVMe SSD: <b>38°C</b> (S.M.A.R.T: OK)</div>
+      </div>
+    </div>
+
+    <div id="wg-weather" class="card">
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8;">
+        <span>🌤️ Bakı, Azərbaycan</span>
+        <span style="cursor:pointer; color:#f87171;" onclick="toggleWItem('wg-weather')">Çıxar</span>
+      </div>
+      <div style="font-size:20px; font-weight:700; margin-top:4px;">14°C <span style="font-size:12px; font-weight:400; color:#94a3b8;">Buludlu</span></div>
+    </div>
+
+    <div id="wg-note" class="card">
+      <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#94a3b8; margin-bottom:5px;">
+        <span>📌 Sürətli Qeyd</span>
+        <span style="cursor:pointer; color:#f87171;" onclick="toggleWItem('wg-note')">Çıxar</span>
+      </div>
+      <textarea rows="3" placeholder="Qeyd yazın..." style="width:100%; background:#141820; border:1px solid #333a48; color:#fff; border-radius:4px; padding:6px; font-size:12px; resize:none;"></textarea>
+    </div>
+  </aside>
+
+  <!-- WINDOWS 11 START MENU -->
+  <div id="win-start" class="win-start">
+    <div style="font-size:12px; font-weight:600; color:#93c5fd; margin-bottom:10px;">Bütün Proqramlar (Pinned)</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;">
+      <button class="win-icon" style="width:100%;" onclick="openWin('lessons'); toggleStart(false);"><span class="win-icon-glyph">📘</span><span class="win-icon-label">Mövzular</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('wizard'); toggleStart(false);"><span class="win-icon-glyph">🩺</span><span class="win-icon-label">Təmir</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('cmd'); toggleStart(false);"><span class="win-icon-glyph">⬛</span><span class="win-icon-label">CMD</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('explorer'); toggleStart(false);"><span class="win-icon-glyph">💻</span><span class="win-icon-label">This PC</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('taskmgr'); toggleStart(false);"><span class="win-icon-glyph">📊</span><span class="win-icon-label">Task Mgr</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('devmgmt'); toggleStart(false);"><span class="win-icon-glyph">🔌</span><span class="win-icon-label">Devices</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('eventvwr'); toggleStart(false);"><span class="win-icon-glyph">📋</span><span class="win-icon-label">Events</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('settings'); toggleStart(false);"><span class="win-icon-glyph">⚙️</span><span class="win-icon-label">Settings</span></button>
+    </div>
+    <div style="border-top:1px solid #333a48; padding-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+      <span>👤 <b>Salman Bağırzadə</b> (Kşats-25/01)</span>
+      <button class="btn-ghost" onclick="lockPc()">🔒 Kilidlə</button>
+    </div>
+  </div>
+
+  <!-- KİLİD EKRANI -->
+  <div id="win-lock">
+    <div id="lk-time" style="font-size:64px; font-weight:300;">20:13</div>
+    <div id="lk-date" style="font-size:14px; color:#94a3b8; margin-bottom:24px;">23 Noyabr 2026</div>
+    <div style="font-size:18px; font-weight:600; margin-bottom:12px;">Salman Bağırzadə</div>
+    <form onsubmit="unlockPc(event)" style="display:flex; gap:8px;">
+      <input id="pin-in" type="password" placeholder="PIN (boşsa Enter)" style="background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 14px; border-radius:6px; outline:none;">
+      <button type="submit" class="btn-primary">Daxil ol</button>
+    </form>
+  </div>
+
+  <!-- WINDOWS 11 TASKBAR -->
+  <footer class="win-taskbar">
+    <!-- Sol: Widgets düyməsi -->
+    <div class="tb-left">
+      <button class="tb-btn" onclick="toggleWidgets()" title="Widgets">
+        <span>🧩</span><span style="font-size:11.5px;">14°C · Widgets</span>
+      </button>
+    </div>
+
+    <!-- Mərkəz: Start və Proqramlar -->
+    <div class="tb-center">
+      <button class="tb-btn" onclick="toggleStart()" title="Start">
+        <span style="display:grid; grid-template-columns:repeat(2,6px); gap:1.5px;">
+          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
+          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
+        </span>
+      </button>
+      <button class="tb-btn" onclick="toggleWin('lessons')" title="Mövzular & Test">📘</button>
+      <button class="tb-btn" onclick="toggleWin('wizard')" title="Təmir Köməkçisi">🩺</button>
+      <button class="tb-btn" onclick="toggleWin('cmd')" title="CMD / Terminal">⬛</button>
+      <button class="tb-btn" onclick="toggleWin('explorer')" title="This PC">💻</button>
+      <button class="tb-btn" onclick="toggleWin('taskmgr')" title="Task Manager">📊</button>
+      <button class="tb-btn" onclick="toggleWin('settings')" title="Settings">⚙️</button>
+    </div>
+
+    <!-- Sağ: Sistem Treyi və Saat -->
+    <div class="tb-right" style="font-size:11.5px;">
+      <span id="tb-mastery-pill" style="background:#0067c0; padding:2px 8px; border-radius:4px; font-weight:600; cursor:pointer;" onclick="openWin('lessons')">Test: 0%</span>
+      <span style="padding:0 4px;">🔊 🌐</span>
+      <div style="text-align:right; line-height:1.2; padding:0 4px;">
+        <div id="tb-time">20:13</div>
+        <div id="tb-date" style="font-size:10px; color:#94a3b8;">23.11.2026</div>
+      </div>
+      <button class="tb-btn" style="padding:0 6px;" onclick="minAll()" title="Show Desktop">|</button>
+    </div>
+  </footer>
+
+  <script>
+    // SLAYDDAKI (emeliyyat.sistemleri2.pptx) BÜTÜN MÖVZULAR, CƏDVƏLLƏR VƏ TEST SUALLARI
+    const modules = [
+      {
+        title: "1. Hardware və Software Təsnifatı",
+        badge: "Modul 2 · RCA",
+        theory: "Sistem və şəbəkə nasazlıqlarının sürətli kök-səbəb analizi (Root-Cause Analysis) üçün xətalar iki yerə ayrılır: Aparat (Hardware) və Proqram/Şəbəkə (Software).",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Aparat (Hardware) Xətaları</th><th>Proqram və Şəbəkə Xətaları</th></tr></thead>
+            <tbody>
+              <tr><td><b>Kabel və Port Zədələri:</b> RJ-45 sınması, UTP damar qırıqlığı, 100 Mbps-ə düşmə</td><td><b>Drayver Konflikti:</b> VEN/DEV uyğunsuzluğu və ya imzasız drayver</td></tr>
+              <tr><td><b>Oksidləşmiş Kontaktlar:</b> RAM/PCIe slotlarında toz/nəm səbəbindən POST xətası</td><td><b>IP Ünvan Toqquşması:</b> Eyni statik IP-yə görə ARP cədvəlinin pozulması</td></tr>
+              <tr><td><b>PSU Gərginlik Düşməsi:</b> +12V və +5V xətlərində dalğalanma, ani sönmə</td><td><b>DNS Resolver Xətası:</b> Domenlərin IP-yə çevrilməməsi (ipconfig /flushdns)</td></tr>
+              <tr><td><b>Termal Boğulma:</b> Qurumuş pasta və tozlu radiator (CPU &gt; 95°C)</td><td><b>OS Fayl Zədələnməsi:</b> System32 pozulması (SFC / DISM tələb edir)</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Hardware şübhəsində Multimetr, POST Kartı və Cable Tester; Software xətalarında isə Event Viewer, SFC / DISM və Wireshark istifadə edin.",
+        questions: [
+          { q: "UTP damar qırıqlığı və oksidləşmiş RAM kontaktları hansı kateqoriyaya aiddir?", opts: ["Hardware xətaları", "DNS xətaları", "OSI Layer 7"], ans: 0 },
+          { q: "Domen adlarının IP-yə çevrilməməsi zamanı hansı CMD əmri icra olunur?", opts: ["ipconfig /flushdns", "chkdsk /r", "mdsched.exe"], ans: 0 }
+        ]
+      },
+      {
+        title: "2. OSI 7 Laylı Model və Şəbəkə Zənciri",
+        badge: "Layer 1 → Layer 7",
+        theory: "Hər yuxarı qat özündən aşağıdakı qatın sağlam işləməsindən asılıdır. Paket Layer 3-də itirsə, Layer 7-də (brauzerdə) tənzimləmə vaxt itkisidir.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>OSI Qatı</th><th>Protokol / Texnologiya</th><th>Diaqnostika Aləti</th></tr></thead>
+            <tbody>
+              <tr><td><b>Layer 7 (Application)</b></td><td>HTTP, DNS, DHCP, SMTP</td><td>nslookup / curl</td></tr>
+              <tr><td><b>Layer 4 (Transport)</b></td><td>TCP / UDP, Portlar</td><td>netstat -ano / telnet</td></tr>
+              <tr><td><b>Layer 3 (Network)</b></td><td>IPv4/IPv6, ICMP, Routing</td><td>ping / tracert / route</td></tr>
+              <tr><td><b>Layer 2 (Data Link)</b></td><td>MAC, ARP, Ethernet, VLAN</td><td>arp -a / Switch Port</td></tr>
+              <tr><td><b>Layer 1 (Physical)</b></td><td>UTP Cat6, Fiber, Gərginlik</td><td>Cable Tester / LED</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Ardıcıl yoxlama zənciri: 1) ping 127.0.0.1 (Lokal TCP/IP) → 2) ping 192.168.1.1 (Gateway L3) → 3) ping 8.8.8.8 (İnternet) → 4) nslookup google.com (DNS L7).",
+        questions: [
+          { q: "Lokal TCP/IP stekini yoxlamaq üçün hansı ünvana ping atılır?", opts: ["169.254.0.1", "127.0.0.1", "255.255.255.0"], ans: 1 },
+          { q: "ARP cədvəlini və MAC ünvanlarını yoxlamaq üçün hansı əmr işlədilir?", opts: ["arp -a", "sfc /scannow", "devmgmt.msc"], ans: 0 }
+        ]
+      },
+      {
+        title: "3. Diaqnostika Strategiyaları & 4 Mərhələ",
+        badge: "CompTIA A+ & Net+",
+        theory: "5 əsas axtarış strategiyası: Bottom-Up (Layer 1 → 7), Top-Down (Layer 7 → 1), Divide & Conquer (mərkəzdən — Layer 3 IP Ping ilə başlamaq), Elimination (Swap) və POST Analysis (BIOS səs/LED kodları).",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Mərhələ</th><th>İcra Olunan İşlər</th></tr></thead>
+            <tbody>
+              <tr><td><b>1. Simptom Yığımı</b></td><td>Şikayəti dinləmək, əhatə dairəsini (1 PC yoxsa şöbə) və LED işıqlarını təyin etmək.</td></tr>
+              <tr><td><b>2. Fiziki Yoxlama</b></td><td>Cable tester, port bağlantıları, soyutma və voltmetr ölçüləri aparmaq.</td></tr>
+              <tr><td><b>3. CLI Testlər və Təmir</b></td><td>Ping, Tracert, SFC/DISM və Event Viewer ilə kök səbəbi aradan qaldırmaq.</td></tr>
+              <tr><td><b>4. Sənədləşdirmə</b></td><td>İcra edilən əmrləri və həlli log kitabçasına (Report) qeyd etmək.</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Qızıl Qayda: Eyni anda yalnız BİR dəyişiklik edin və hər addımdan sonra sistemi yenidən test edin.",
+        questions: [
+          { q: "Sınağı mərkəz laydan (Layer 3 IP Ping) başlayıb yuxarı/aşağı qatları təcrid edən metod hansıdır?", opts: ["Divide & Conquer", "Top-Down", "POST Analysis"], ans: 0 },
+          { q: "CompTIA diaqnostika modelinin qızıl qaydası nədir?", opts: ["Hər şeyi eyni anda dəyişmək", "Eyni anda yalnız BİR dəyişiklik etmək", "Birbaşa format atmaq"], ans: 1 }
+        ]
+      },
+      {
+        title: "4. IP Toqquşması və APIPA (169.254.x.x)",
+        badge: "TCP/IP Ünvanlama",
+        theory: "Şəbəkədə 2 fərqli cihaza eyni IPv4 düşdükdə IP Address Conflict yaranır. DHCP server cavab vermədikdə isə Windows avtomatik 169.254.0.1 – 169.254.255.254 (APIPA) ünvanı verir və internet kəsilir.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Problem</th><th>Kök Səbəb</th><th>Həll Addımları</th></tr></thead>
+            <tbody>
+              <tr><td><b>IP Conflict</b></td><td>İki MAC ünvana eyni statik IP düşməsi</td><td><code>arp -a</code> ilə yoxla, <code>ipconfig /release</code> və <code>ipconfig /renew</code> icra et.</td></tr>
+              <tr><td><b>APIPA (169.254.x.x)</b></td><td>DHCP DORA sorğusuna cavab gəlməməsi (Gateway boş)</td><td>UTP kabeli, VLAN ID və routerdə DHCP hovuzunu yoxla.</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Statik IP-ləri DHCP hovuzundan kənarda təyin edin və ya routerdə DHCP Reservation yaradın.",
+        questions: [
+          { q: "DHCP server cavab vermədikdə Windows hansı diapazonda APIPA ünvanı təyin edir?", opts: ["192.168.1.x", "169.254.x.x", "10.0.0.x"], ans: 1 }
+        ]
+      },
+      {
+        title: "5. ATX Qida Bloku (PSU) Gərginlikləri",
+        badge: "Elektrik Diaqnostikası",
+        theory: "Multimetr (DC Voltage 20V) ilə qara şupu GND-yə (qara naqil) tutaraq ATX xətlərinin ±5% həddində olub-olmadığı yoxlanılır.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Naqil Rəngi / Xətt</th><th>Nominal Gərginlik</th><th>Texniki Funksiya</th></tr></thead>
+            <tbody>
+              <tr><td><b>Sarı (+12V)</b></td><td>+11.40V – +12.60V</td><td>CPU VRM, GPU PCIe və ventilyatorlar (±5%)</td></tr>
+              <tr><td><b>Qırmızı (+5V)</b></td><td>+4.75V – +5.25V</td><td>SATA HDD/SSD məntiqi, USB portlar (±5%)</td></tr>
+              <tr><td><b>Narıncı (+3.3V)</b></td><td>+3.14V – +3.47V</td><td>DDR4/DDR5 RAM, M.2 NVMe, PCIe (±5%)</td></tr>
+              <tr><td><b>Bənövşəyi (+5VSB)</b></td><td>+4.75V – +5.25V</td><td>Stand-by enerji (Power düyməsi, Wake-on-LAN)</td></tr>
+              <tr><td><b>Boz (PG / PWR_OK)</b></td><td>+2.4V – +5.0V</td><td>Gərginliyin stabilliyini CPU-ya bildirir (0V = PC açılmır)</td></tr>
+              <tr><td><b>Yaşıl (PS_ON#)</b></td><td>+3.3V/5V → 0V (GND)</td><td>Qara naqilə qısa qapanma ilə PSU işə düşür (Paperclip Test)</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Yük altında ±5% həddi aşılarsa və ya PG (Boz) xətti 0V olarsa, PSU dəyişdirilməlidir.",
+        questions: [
+          { q: "ATX qida blokunda sarı naqil hansı gərginliyi daşıyır?", opts: ["+3.3V", "+5V", "+12V"], ans: 2 },
+          { q: "Boz (PG / PWR_OK) naqildə gərginlik 0V olarsa nə baş verir?", opts: ["Sistem açılmır", "İnternet sürətlənir", "Səs artır"], ans: 0 }
+        ]
+      },
+      {
+        title: "6. BSOD (Mavi Ekran) & Event Viewer",
+        badge: "Kritik Xətalar",
+        theory: "BSOD anında RAM surəti C:\\Windows\\Minidump\\*.dmp faylına yazılır. WinDbg-də '!analyze -v' və Event Viewer (eventvwr.msc) ilə kök səbəb tapılır.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Stop Kodu</th><th>Kök Səbəb</th><th>Həll Yolu</th></tr></thead>
+            <tbody>
+              <tr><td><b>CRITICAL_PROCESS_DIED (0xEF)</b></td><td>csrss.exe / wininit.exe dayanması</td><td>DISM /RestoreHealth → sfc /scannow</td></tr>
+              <tr><td><b>DRIVER_IRQL_NOT_LESS_OR_EQUAL</b></td><td>Drayverin səhv yaddaş müraciəti</td><td>Driver Rollback / WHQL yeniləmə</td></tr>
+              <tr><td><b>PAGE_FAULT_IN_NONPAGED_AREA (0x50)</b></td><td>Zədəli RAM sektoru və ya NTFS xətası</td><td>MemTest86 və chkdsk /f /r</td></tr>
+              <tr><td><b>VIDEO_TDR_FAILURE (0x116)</b></td><td>GPU drayver çökməsi və ya qızma</td><td>DDU ilə təmiz GPU drayver quraşdırma</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Event Viewer-də Event ID 41 (Kernel-Power) və Event ID 1001 (BugCheck) qeydlərini filtr edin.",
+        questions: [
+          { q: "Gözlənilməz sönmə və elektrik kəsilməsi Event Viewer-də hansı ID ilə düşür?", opts: ["Event ID 41", "Event ID 80", "Event ID 443"], ans: 0 }
+        ]
+      },
+      {
+        title: "7. RJ-45 T568B Kabel Sxemi",
+        badge: "Fiziki Bağlantı",
+        theory: "RJ-45 konnektorda kontaktlar yuxarı, pin 1 solda olmaqla T568B ardıcıllığı tətbiq edilir. 1, 2, 3, 6 pinləri data (Tx/Rx) üçündür.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Pin</th><th>T568B Rəngi</th><th>Funksiya</th></tr></thead>
+            <tbody>
+              <tr><td><b>1, 2</b></td><td>1. Narıncı-Ağ · 2. Narıncı</td><td>Tx+ / Tx− (Məlumat göndərişi)</td></tr>
+              <tr><td><b>3, 6</b></td><td>3. Yaşıl-Ağ · 6. Yaşıl</td><td>Rx+ / Rx− (Məlumat qəbulu)</td></tr>
+              <tr><td><b>4, 5</b></td><td>4. Mavi · 5. Mavi-Ağ</td><td>PoE / Gigabit</td></tr>
+              <tr><td><b>7, 8</b></td><td>7. Qəhvəyi-Ağ · 8. Qəhvəyi</td><td>PoE / Gigabit</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "LAN Tester ilə 1-dən 8-dək bütün LED diodların ardıcıl yandığını təsdiqləyin.",
+        questions: [
+          { q: "T568B standartında 1-ci və 2-ci pinlər hansı rəngdədir?", opts: ["Yaşıl-Ağ və Yaşıl", "Narıncı-Ağ və Narıncı", "Mavi və Mavi-Ağ"], ans: 1 }
+        ]
+      },
+      {
+        title: "8. Disk Sağlamlığı (CHKDSK & S.M.A.R.T.)",
+        badge: "HDD & NVMe SSD",
+        theory: "CHKDSK fayl sistemi xətalarını düzəldir, S.M.A.R.T. sensorları isə diskin sıradan çıxmasını əvvəlcədən xəbər verir (wmic diskdrive get status,model).",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Parametr / Atribut</th><th>Təsviri</th></tr></thead>
+            <tbody>
+              <tr><td><b>chkdsk /f /r /x</b></td><td>/F: məntiqi NTFS təmiri · /R: pis sektor təcridi (yalnız HDD!) · /X: bölməni ayırır.</td></tr>
+              <tr><td><b>ID 05 (Reallocated Sectors)</b></td><td>Zədəli sektorların ehtiyat sahəyə köçürülmə sayı.</td></tr>
+              <tr><td><b>ID C5 (Pending Sector)</b></td><td>Oxunması qeyri-stabil olan şübhəli sektorlar.</td></tr>
+              <tr><td><b>ID C7 (UltraDMA CRC Error)</b></td><td>SATA kabeli və ya port arasındakı rabitə xətası.</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Diqqət: SSD-lərdə /r parametri əvəzinə yalnız 'chkdsk C: /f' istifadə edin və NVMe temperaturunu 70°C-dən aşağı saxlayın.",
+        questions: [
+          { q: "SSD disklərdə zədəli sektorları bərpa etmək üçün hansı parametr istifadə olunur?", opts: ["chkdsk /f (yalnız /f)", "chkdsk /r", "format c:"], ans: 0 }
+        ]
+      },
+      {
+        title: "9. RAM Təmizliyi və Soyutma (Throttling)",
+        badge: "Aparat Profilaktikası",
+        theory: "RAM təmizliyi: PSU ayır → Power 10 san bas → Modulu çıxar → Ağ pozanla qızılı pinləri sil → 99% IPA spirti ilə təmizlə → Slotu üfür → Klik səsinədək tax. Yoxlama: mdsched.exe və MemTest86.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>İstilik Zonası</th><th>Dərəcə</th><th>Vəziyyət və Müdaxilə</th></tr></thead>
+            <tbody>
+              <tr><td style="color:#4ade80;"><b>Optimal Zona</b></td><td>35°C – 65°C</td><td>Tam Turbo Boost performansı.</td></tr>
+              <tr><td style="color:#f87171;"><b>Kritik Zona (Throttling)</b></td><td>&gt; 90°C – 100°C</td><td>CPU tezliyi (GHz) düşür, donma və ani sönmə olur. Hər 6–12 aydan bir toz təmizlənməli və 8–12 W/mK termopasta yenilənməlidir.</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Qadağandır: RAM pinlərinə barmaqla toxunmaq və slota ağızla üfürmək (nəm yaradır)!",
+        questions: [
+          { q: "CPU temperaturu 90°C–100°C həddini keçdikdə tezliyin avtomatik aşağı salınması nə adlanır?", opts: ["Thermal Throttling", "APIPA", "Crimping"], ans: 0 }
+        ]
+      },
+      {
+        title: "10. Task Manager, Device Manager & Server",
+        badge: "İnzibatçılıq",
+        theory: "Boş rejimdə CPU 10%-dən, Disk isə 5%-dən aşağı olmalıdır. Server dayanmasının qarşısını almaq üçün 24/7 monitorinq, UPS, dövri Backup və Redundancy tətbiq edilir.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Göstərici</th><th>Nasazlıq Zamanı</th><th>Diaqnostika və Təmirdən Sonra</th></tr></thead>
+            <tbody>
+              <tr><td><b>CPU Yükü (Boşda)</b></td><td>85% – 96%</td><td>8% – 18% (Normal iş rejimi)</td></tr>
+              <tr><td><b>RAM İstifadəsi</b></td><td>90%+ (Dolmuş)</td><td>35% – 45% (Optimallaşdırılmış)</td></tr>
+              <tr><td><b>CPU Temperaturu</b></td><td>92°C – 98°C</td><td>42°C – 55°C (Optimal soyutma)</td></tr>
+              <tr><td><b>Açılma Vaxtı</b></td><td>1 dəq 45 san</td><td>16 – 20 saniyə (5 dəfə sürətli)</td></tr>
+            </tbody>
+          </table>`,
+        howToFix: "Sistematik diaqnostika (Task Manager → Device Manager → CLI) format atmadan kompüterin performansını tam bərpa edir.",
+        questions: [
+          { q: "Boş rejimdə (heç bir proqram açıq olmadıqda) CPU yükü neçə faizdən aşağı olmalıdır?", opts: ["10%-dən aşağı", "50%-dən aşağı", "85%-dən aşağı"], ans: 0 }
+        ]
+      }
+    ];
+
+    let activeMod = 0;
+    const answers = {};
+
+    function initLessons() {
+      const sb = document.getElementById('lesson-sidebar');
+      modules.forEach((m, i) => {
+        const b = document.createElement('button');
+        b.className = 'btn-ghost';
+        b.style.textAlign = 'left';
+        b.style.fontSize = '11.5px';
+        b.id = 'mod-nav-' + i;
+        b.textContent = m.title;
+        b.onclick = () => renderLesson(i);
+        sb.appendChild(b);
+      });
+      const testAllBtn = document.createElement('button');
+      testAllBtn.className = 'btn-primary';
+      testAllBtn.style.marginTop = '8px';
+      testAllBtn.textContent = '📝 Ümumi Bilik Testi (16 Sual)';
+      testAllBtn.onclick = renderAllQuiz;
+      sb.appendChild(testAllBtn);
+      renderLesson(0);
+    }
+
+    function renderLesson(i) {
+      activeMod = i;
+      modules.forEach((_, idx) => {
+        const el = document.getElementById('mod-nav-' + idx);
+        el.style.background = idx === i ? '#0067c0' : '#282e3b';
+        el.style.borderColor = idx === i ? '#38bdf8' : '#3b4354';
+      });
+      const m = modules[i];
+      const body = document.getElementById('lesson-body');
+      body.innerHTML = `
+        <span class="badge">${m.badge}</span>
+        <h2 style="margin:8px 0 6px 0; font-size:18px;">${m.title}</h2>
+        <p style="color:#cbd5e1; margin-top:0;">${m.theory}</p>
+        ${m.table}
+        <div class="card" style="margin-top:12px; border-left:3px solid #f59e0b;">
+          <b style="color:#fbbf24;">🛠️ Necə Düzəltmək Olar:</b> ${m.howToFix}
+          <div style="margin-top:8px;"><button class="btn-ghost" onclick="openWin('cmd')">CMD Terminalda Yoxla →</button></div>
+        </div>
+        <div class="card" style="margin-top:12px; border-left:3px solid #22c55e;">
+          <b style="color:#4ade80;">✅ Özünü Yoxla (Mövzu Testi):</b>
+          ${m.questions.map((qItem, qIdx) => `
+            <div style="margin-top:10px;">
+              <div style="font-weight:600; margin-bottom:6px;">${qIdx + 1}. ${qItem.q}</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${qItem.opts.map((o, oIdx) => `
+                  <button class="btn-ghost" onclick="checkAns(${i}, ${qIdx}, ${oIdx}, this)">${o}</button>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderAllQuiz() {
+      const body = document.getElementById('lesson-body');
+      let html = `<h2 style="margin-top:0; color:#38bdf8;">📝 Ümumi Mənimsəmə Testi (Bütün Slayd Mövzuları)</h2>`;
+      modules.forEach((m, mIdx) => {
+        m.questions.forEach((qItem, qIdx) => {
+          html += `
+            <div class="card" style="margin-bottom:10px;">
+              <div style="font-size:11px; color:#93c5fd;">${m.title}</div>
+              <div style="font-weight:600; margin:4px 0 8px 0;">${qItem.q}</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${qItem.opts.map((o, oIdx) => `
+                  <button class="btn-ghost" onclick="checkAns(${mIdx}, ${qIdx}, ${oIdx}, this)">${o}</button>
+                `).join('')}
+              </div>
+            </div>`;
+        });
+      });
+      body.innerHTML = html;
+    }
+
+    function checkAns(mIdx, qIdx, oIdx, btn) {
+      const isRight = modules[mIdx].questions[qIdx].ans === oIdx;
+      btn.parentElement.querySelectorAll('button').forEach(b => { b.style.background = '#282e3b'; });
+      btn.style.background = isRight ? '#15803d' : '#b91c1c';
+      answers[`${mIdx}-${qIdx}`] = isRight;
+
+      const total = modules.reduce((s, m) => s + m.questions.length, 0);
+      const ok = Object.values(answers).filter(Boolean).length;
+      const pct = Math.round((ok / total) * 100);
+      document.getElementById('wg-pct').textContent = pct + '%';
+      document.getElementById('wg-sub').textContent = `${ok} / ${total} Test sualı düzgün cavablanıb`;
+      document.getElementById('tb-mastery-pill').textContent = `Test: ${pct}%`;
+    }
+
+    // TƏMİR KÖMƏKÇİSİ (WIZARD)
+    const fixes = {
+      net_apipa: `<b>🌐 APIPA Ünvanı (169.254.x.x) Diaqnostikası:</b><br>1. UTP kabelini və switch port LED-lərini (Layer 1) yoxlayın.<br>2. Routerdə DHCP serverin aktiv və IP hovuzunun dolmadığını yoxlayın.<br>3. CMD-də <code>ipconfig /release</code> və <code>ipconfig /renew</code> əmrlərini icra edin.`,
+      ip_conflict: `<b>⚠️ IP Address Conflict Həlli:</b><br>1. <code>arp -a</code> əmri ilə eyni IP-yə bağlı iki fərqli MAC ünvanı tapın.<br>2. Statik IP-ni DHCP hovuzundan kənara çıxarın və ya DHCP Reservation yaradın.<br>3. <code>ipconfig /release && ipconfig /renew</code> icra edin.`,
+      bsod: `<b>🟦 BSOD (Mavi Ekran) Analizi:</b><br>1. <code>eventvwr.msc</code> açın → Windows Logs → System → Event ID 41 və 1001 yoxlayın.<br>2. <code>C:\\Windows\\Minidump\\*.dmp</code> faylını WinDbg-də <code>!analyze -v</code> ilə analiz edin.<br>3. Stop koduna görə DISM/SFC, Driver Rollback və ya MemTest86 tətbiq edin.`,
+      cpu_ram: `<b>🔥 CPU 95% / RAM 100% / Termal Boğulma (&gt;90°C):</b><br>1. <code>Ctrl + Shift + Esc</code> → Processes bölməsində ağır tətbiqi <b>End Task</b> edin.<br>2. Startup bölməsində lazımsız proqramları <b>Disable</b> edin.<br>3. CPU 90°C-dən yuxarıdırsa, radiatoru tozdan təmizləyin və 8–12 W/mK termopasta yeniləyin.`,
+      disk: `<b>💾 Disk Xətaları və S.M.A.R.T. Analizi:</b><br>1. <code>wmic diskdrive get status,model</code> və CrystalDiskInfo ilə ID 05, C5, C7 sensorlarını yoxlayın.<br>2. HDD üçün <code>chkdsk C: /f /r</code>, SSD üçün isə yalnız <code>chkdsk C: /f</code> icra edin.`,
+      no_boot: `<b>⚡ PC Açılmır / Ekrana Görüntü Gəlmir:</b><br>1. BIOS səs siqnallarını (Beep codes) və anakartdakı EZ Debug LED-ləri oxuyun.<br>2. PSU gərginliklərini ölçün: Sarı (+12V), Qırmızı (+5V), Narıncı (+3.3V), Boz PG (+2.4V–5V).<br>3. RAM modullarını çıxarıb ağ pozan və 99% izopropil spirti ilə təmizləyin.`,
+      driver: `<b>🔌 Səs və Sürücü Problemləri (Kod 28 / Kod 43):</b><br>1. <code>devmgmt.msc</code> açın → Properties → Details → Hardware Ids (VEN/DEV) tapın.<br>2. WHQL imzalı rəsmi drayver yükləyin və ya <b>Roll Back Driver</b> edin.<br>3. Səs üçün <code>services.msc</code> daxilində <b>Windows Audio</b> xidmətini Restart edin.`,
+      os_corrupt: `<b>🛠️ Windows Sistem Fayllarının Bərpası:</b><br>1. CMD-ni Administrator kimi açın.<br>2. Əvvəlcə <code>DISM /Online /Cleanup-Image /RestoreHealth</code> icra edin.<br>3. Ardınca <code>sfc /scannow</code> ilə System32 fayllarını bərpa edin.`
+    };
+    function showWizardFix(key) {
+      document.getElementById('wizard-output').innerHTML = fixes[key];
+    }
+
+    // CMD / LINUX HİBRİD TERMİNAL
+    const vfs = {
+      folders: ['Documents', 'Desktop', 'Minidump', 'Lab_Reports'],
+      files: {
+        'qeyd.txt': 'ADPU Pedaqoji Kolleci - Qrup Ksats-25/01\nMovzu: Sistem ve Sebeke Nasazliqlarinin Diaqnostikasi',
+        'CBS.log': '[INFO] SFC /SCANNOW yoxlamasi ugurla tamamlandi.'
+      }
+    };
+    function renderVfs() {
+      const box = document.getElementById('vfs-list');
+      box.innerHTML = '';
+      vfs.folders.forEach(f => {
+        box.innerHTML += `<div class="card" style="text-align:center; padding:10px;"><div style="font-size:22px;">📁</div><div>${f}</div></div>`;
+      });
+      Object.keys(vfs.files).forEach(fn => {
+        box.innerHTML += `<div class="card" style="text-align:center; padding:10px; cursor:pointer;" onclick="openNp('${fn}')"><div style="font-size:22px;">📄</div><div>${fn}</div></div>`;
+      });
+    }
+    function addVfsFolder() { const n = prompt('Qovluq adı:'); if (n) { vfs.folders.push(n); renderVfs(); } }
+    function addVfsFile() { const n = prompt('Fayl adı:'); if (n) { vfs.files[n] = ''; renderVfs(); openNp(n); } }
+    function openNp(fn) { document.getElementById('np-name').value = fn; document.getElementById('np-text').value = vfs.files[fn] || ''; openWin('notepad'); }
+    function saveNp() { const fn = document.getElementById('np-name').value.trim() || 'qeyd.txt'; vfs.files[fn] = document.getElementById('np-text').value; renderVfs(); alert(fn + ' saxlanıldı!'); }
+
+    function execCmd(e) {
+      e.preventDefault();
+      const inp = document.getElementById('cmd-in');
+      const raw = inp.value.trim();
+      if (!raw) return;
+      const out = document.getElementById('cmd-out');
+      out.innerHTML += `<div><span style="color:#4ade80;">C:\\Users\\Salman&gt;</span> ${raw}</div>`;
+      const low = raw.toLowerCase();
+      const parts = raw.split(/\s+/);
+      const cmd = parts[0].toLowerCase();
+      const arg = parts.slice(1).join(' ');
+
+      if (cmd === 'help') {
+        out.innerHTML += `<div style="color:#93c5fd;">Windows Diaqnostika: sfc /scannow, dism, chkdsk, ipconfig, arp -a, ping, tracert, nslookup, netstat -ano, wmic, tasklist, systeminfo, cls</div><div style="color:#4ade80;">Linux Əmrləri: ls, dir, pwd, whoami, uname, neofetch, mkdir, touch, cat, rm, clear</div>`;
+      } else if (cmd === 'cls' || cmd === 'clear') {
+        out.innerHTML = '';
+      } else if (cmd === 'ls' || cmd === 'dir') {
+        out.innerHTML += `<div>${vfs.folders.map(d => `[DIR] ${d}`).join('  ')}  ${Object.keys(vfs.files).join('  ')}</div>`;
+      } else if (cmd === 'pwd') {
+        out.innerHTML += `<div>C:\\Users\\Salman (/home/salman)</div>`;
+      } else if (cmd === 'whoami') {
+        out.innerHTML += `<div>desktop-coreos\\salman (Salman Bağırzadə · Kşats-25/01)</div>`;
+      } else if (cmd === 'uname' || cmd === 'neofetch') {
+        out.innerHTML += `<pre style="color:#38bdf8; margin:4px 0;">OS: Windows 11 / Linux Hybrid Lab\nHost: ASUS Vivobook S16 (Core 5 210H, 16GB DDR5)\nGroup: Ksats-25/01 (ADPU Pedaqoji Kolleci)</pre>`;
+      } else if (cmd === 'mkdir' && arg) {
+        vfs.folders.push(arg); renderVfs(); out.innerHTML += `<div>Qovluq yaradıldı: ${arg}</div>`;
+      } else if (cmd === 'touch' && arg) {
+        vfs.files[arg] = ''; renderVfs(); out.innerHTML += `<div>Fayl yaradıldı: ${arg}</div>`;
+      } else if ((cmd === 'cat' || cmd === 'type') && arg in vfs.files) {
+        out.innerHTML += `<pre style="margin:4px 0;">${vfs.files[arg]}</pre>`;
+      } else if ((cmd === 'rm' || cmd === 'del') && arg) {
+        delete vfs.files[arg]; vfs.folders = vfs.folders.filter(x => x !== arg); renderVfs(); out.innerHTML += `<div>Silindi: ${arg}</div>`;
+      } else if (cmd === 'sfc') {
+        out.innerHTML += `<div style="color:#4ade80;">Verification 100% complete. Windows Resource Protection did not find any integrity violations.</div>`;
+      } else if (cmd === 'dism') {
+        out.innerHTML += `<div style="color:#4ade80;">[==========================100.0%==========================] The restore operation completed successfully.</div>`;
+      } else if (cmd === 'chkdsk') {
+        out.innerHTML += `<div style="color:#4ade80;">Windows has scanned the file system and found no problems. 0 KB in bad sectors.</div>`;
+      } else if (cmd === 'ipconfig') {
+        out.innerHTML += `<div>Ethernet adapter Ethernet0:\n   IPv4 Address. . . : 192.168.1.105\n   Subnet Mask . . . : 255.255.255.0\n   Default Gateway . : 192.168.1.1</div>`;
+      } else if (cmd === 'arp') {
+        out.innerHTML += `<div>Interface: 192.168.1.105 --- 0x4\n  Internet Address      Physical Address      Type\n  192.168.1.1           d8-0d-17-4a-92-10     dynamic</div>`;
+      } else if (cmd === 'ping') {
+        const h = arg || '8.8.8.8';
+        out.innerHTML += `<div>Pinging ${h} with 32 bytes of data:\nReply from ${h}: bytes=32 time=11ms TTL=118</div>`;
+      } else if (cmd === 'tracert') {
+        out.innerHTML += `<div>Tracing route to ${arg || 'google.com'}:\n  1    1 ms     1 ms     1 ms  192.168.1.1\n  2   12 ms    11 ms    12 ms  142.250.185.78</div>`;
+      } else if (cmd === 'nslookup') {
+        out.innerHTML += `<div>Server:  UnKnown\nAddress:  192.168.1.1\nName:    ${arg || 'google.com'}\nAddress:  142.250.185.78</div>`;
+      } else if (cmd === 'netstat') {
+        out.innerHTML += `<div>Proto  Local Address          Foreign Address        State\nTCP    192.168.1.105:51422    142.250.185.78:443     ESTABLISHED</div>`;
+      } else if (cmd === 'wmic') {
+        out.innerHTML += `<div>Model                       Status\nNVMe Micron_2400_MTFDKBA512  OK</div>`;
+      } else if (cmd === 'tasklist') {
+        out.innerHTML += `<div>System Idle Process   0   16 K\nexplorer.exe       1420   85,120 K\ncmd.exe            3104   12,400 K</div>`;
+      } else if (cmd === 'systeminfo') {
+        out.innerHTML += `<div>Host Name: DESKTOP-SALMAN | OS: Windows 11 Pro | CPU: Intel Core 5 210H | RAM: 16,384 MB</div>`;
+      } else {
+        out.innerHTML += `<div style="color:#f87171;">'${cmd}' tanınmadı. Bütün əmrlər üçün 'help' yazın.</div>`;
+      }
+      inp.value = '';
+    }
+
+    // Pəncərə & Sistem İdarəetməsi
+    let zIdx = 40;
+    function openWin(id) {
+      const w = document.getElementById('win-' + id);
+      if (!w) return;
+      w.classList.add('open');
+      w.style.zIndex = ++zIdx;
+      if (id === 'explorer') renderVfs();
+    }
+    function closeWin(id) { document.getElementById('win-' + id).classList.remove('open'); }
+    function minWin(id) { document.getElementById('win-' + id).classList.remove('open'); }
+    function toggleWin(id) { const w = document.getElementById('win-' + id); w.classList.contains('open') ? minWin(id) : openWin(id); }
+    function maxWin(winId) { document.getElementById(winId).classList.toggle('maximized'); }
+    function minAll() { document.querySelectorAll('.win-window').forEach(w => w.classList.remove('open')); }
+
+    function dragWin(e, winId) {
+      if (e.target.tagName === 'BUTTON') return;
+      const w = document.getElementById(winId);
+      if (w.classList.contains('maximized')) return;
+      w.style.zIndex = ++zIdx;
+      const dx = e.clientX - w.offsetLeft, dy = e.clientY - w.offsetTop;
+      function mv(ev) { w.style.left = Math.max(0, ev.clientX - dx) + 'px'; w.style.top = Math.max(0, ev.clientY - dy) + 'px'; }
+      function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+      document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+    }
+
+    function toggleStart(f) { const s = document.getElementById('win-start'); typeof f === 'boolean' ? s.classList.toggle('open', f) : s.classList.toggle('open'); }
+    function toggleWidgets() { document.getElementById('win-widgets').classList.toggle('open'); }
+    function toggleWItem(id) { document.getElementById(id).classList.toggle('hidden'); }
+    function setBg(bg) { document.getElementById('wallpaper-img').style.display = 'none'; document.querySelector('.win-wallpaper').style.background = bg; }
+
+    function cAdd(v) { const d = document.getElementById('calc-disp'); d.value = d.value === '0' ? v : d.value + v; }
+    function cClr() { document.getElementById('calc-disp').value = '0'; }
+    function cEq() { const d = document.getElementById('calc-disp'); try { d.value = Function('"use strict";return (' + d.value + ')')(); } catch { d.value = 'Error'; } }
+
+    let pinCode = '';
+    function savePin() { pinCode = document.getElementById('pin-set').value; alert('PIN yadda saxlanıldı!'); }
+    function lockPc() { toggleStart(false); document.getElementById('pin-in').value = ''; document.getElementById('win-lock').classList.add('active'); }
+    function unlockPc(e) { e.preventDefault(); if (!pinCode || document.getElementById('pin-in').value === pinCode) document.getElementById('win-lock').classList.remove('active'); else alert('PIN yanlışdır!'); }
+
+    function tick() {
+      const now = new Date();
+      const t = now.toTimeString().slice(0, 5);
+      const d = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
+      document.getElementById('tb-time').textContent = t;
+      document.getElementById('tb-date').textContent = d;
+      document.getElementById('lk-time').textContent = t;
+    }
+    setInterval(tick, 1000); tick();
+    initLessons();
+  </script>
+</body>
+</html>
