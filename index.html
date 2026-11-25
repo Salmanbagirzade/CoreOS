@@ -5,7 +5,7 @@
   <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#181c24">
-  <title>Windows 11 · Sistem və Şəbəkə Diaqnostikası (Kşats-25/01)</title>
+  <title>CoreOS · Sistem və Şəbəkə Diaqnostikası (Kşats-25/01)</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     html, body {
@@ -19,7 +19,7 @@
       color: #fff;
     }
 
-    /* Təmiz Windows 11 Bloom tipli fon */
+    /* Şəkilli və Bloom tipli fon */
     .win-wallpaper {
       position: fixed;
       inset: 0;
@@ -30,7 +30,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.85;
+      opacity: 0.88;
     }
 
     /* İş Masası Sahəsi */
@@ -193,7 +193,7 @@
       bottom: 56px;
       left: 50%;
       transform: translateX(-50%);
-      width: 440px;
+      width: 460px;
       max-width: calc(100vw - 20px);
       background: rgba(28, 33, 43, 0.97);
       backdrop-filter: blur(24px);
@@ -206,7 +206,7 @@
     }
     .win-start.open { display: block; }
 
-    /* Widgets Panel (İstəyə görə açılıb-bağlanan Windows 11 Widgets) */
+    /* Widgets Panel */
     .win-widgets {
       position: fixed;
       top: 10px;
@@ -297,19 +297,19 @@
 <body>
   <!-- Divar Kağızı -->
   <div class="win-wallpaper">
-    <img id="wallpaper-img" src="./İş masası · CoreOS_files/b70af5423f206cf35713a7de576c364b_coreos-wallpaper.jpg" alt="" onerror="this.style.display='none'">
+    <img id="wallpaper-img" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80" alt="" onerror="this.style.display='none'">
   </div>
 
   <!-- İŞ MASASI -->
   <div class="desktop-area">
     <div class="desktop-icons">
-      <!-- 1. Mövzular & Diaqnostika Proqramı (Slayddakı bütün 10 bölmə) -->
+      <!-- 1. Mövzular & Diaqnostika Proqramı -->
       <button class="win-icon" onclick="openWin('lessons')">
         <span class="win-icon-glyph">📘</span>
         <span class="win-icon-label">Mövzular & Test</span>
       </button>
 
-      <!-- 2. Diaqnostika Köməkçisi (Nasazlıq Tapıcı) -->
+      <!-- 2. Diaqnostika Köməkçisi -->
       <button class="win-icon" onclick="openWin('wizard')">
         <span class="win-icon-glyph">🩺</span>
         <span class="win-icon-label">Təmir Köməkçisi</span>
@@ -321,7 +321,7 @@
         <span class="win-icon-label">CMD / Terminal</span>
       </button>
 
-      <!-- 4. This PC (Fayllarım) -->
+      <!-- 4. This PC -->
       <button class="win-icon" onclick="openWin('explorer')">
         <span class="win-icon-glyph">💻</span>
         <span class="win-icon-label">This PC</span>
@@ -365,7 +365,7 @@
     </div>
   </div>
 
-  <!-- 1. PƏNCƏRƏ: MÖVZULAR, METODLAR VƏ BİLİK TESTİ (SLAYD ƏSASINDA) -->
+  <!-- 1. PƏNCƏRƏ: MÖVZULAR, METODLAR VƏ BİLİK TESTİ -->
   <div id="win-lessons" class="win-window">
     <div class="win-titlebar" onmousedown="dragWin(event, 'win-lessons')">
       <div class="win-title">📘 Sistem və Şəbəkə Nasazlıqlarının Diaqnostikası — ADPU Pedaqoji Kolleci (Kşats-25/01)</div>
@@ -376,19 +376,14 @@
       </div>
     </div>
     <div style="display:flex; flex:1; overflow:hidden;">
-      <!-- Sol Mövzu Siyahısı -->
       <div id="lesson-sidebar" style="width:245px; background:#141820; border-right:1px solid #2e3543; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; flex-shrink:0;">
         <div style="font-size:11px; color:#94a3b8; padding:4px 6px; font-weight:600;">TƏDRİS MODULLARI (SLAYD)</div>
-        <!-- JS ilə doldurulur -->
       </div>
-      <!-- Sağ Mövzu İzahı və Test -->
-      <div id="lesson-body" style="flex:1; padding:18px; overflow-y:auto; font-size:13px; line-height:1.55;">
-        <!-- JS ilə doldurulur -->
-      </div>
+      <div id="lesson-body" style="flex:1; padding:18px; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
     </div>
   </div>
 
-  <!-- 2. PƏNCƏRƏ: İNTERAKTİV TƏMİR KÖMƏKÇİSİ (TROUBLESHOOTING WIZARD) -->
+  <!-- 2. PƏNCƏRƏ: TƏMİR KÖMƏKÇİSİ -->
   <div id="win-wizard" class="win-window" style="width:680px; max-width:94vw;">
     <div class="win-titlebar" onmousedown="dragWin(event, 'win-wizard')">
       <div class="win-title">🩺 Windows Sistem & Şəbəkə Nasazlıq Təmir Köməkçisi</div>
@@ -428,7 +423,7 @@
     </div>
     <div onclick="document.getElementById('cmd-in').focus()" style="flex:1; background:#0c0c0c; color:#cccccc; font-family:Consolas, monospace; font-size:12.5px; padding:14px; overflow-y:auto;">
       <div id="cmd-out">
-        <div>Microsoft Windows [Version 10.0.22631] &amp; Linux Bash Hybrid Shell</div>
+        <div>Microsoft Windows [Version 10.0.22631] &amp; Linux Bash Hybrid Shell · CoreOS</div>
         <div style="color:#38bdf8; margin-bottom:8px;">Slayddakı bütün diaqnostika əmrlərini sınaya bilərsiniz. Siyahı üçün <b>help</b> yazın.</div>
       </div>
       <form onsubmit="execCmd(event)" style="display:flex; gap:6px; margin-top:6px;">
@@ -438,7 +433,7 @@
     </div>
   </div>
 
-  <!-- 4. PƏNCƏRƏ: THIS PC (FILE EXPLORER) -->
+  <!-- 4. PƏNCƏRƏ: THIS PC -->
   <div id="win-explorer" class="win-window" style="width:660px; max-width:94vw;">
     <div class="win-titlebar" onmousedown="dragWin(event, 'win-explorer')">
       <div class="win-title">💻 This PC — Fayl Meneceri</div>
@@ -599,37 +594,13 @@
         <button class="win-btn close" onclick="closeWin('settings')">✕</button>
       </div>
     </div>
-    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px; display:flex; flex-direction:column; gap:12px;">
-      <div class="card">
-        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">💻 Sistem Haqqında (About)</div>
-        <div><b>Tələbə:</b> Salman Bağırzadə Mehman · <b>Qrup:</b> Kşats-25/01</div>
-        <div><b>Müəssisə:</b> ADPU-nun nəzdində Azərbaycan Dövlət Pedaqoji Kolleci</div>
-        <div><b>Fənn müəllimi:</b> Samirə Kərimova</div>
-        <div><b>Cihaz:</b> ASUS Vivobook S16 · Intel Core 5 210H · 16 GB DDR5 · Windows 11</div>
-      </div>
-      <div class="card">
-        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">🖼️ Divar Kağızı (Background)</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 20% 25%, #1d4ed8 0%, #0f172a 48%, #060b16 100%)')">Windows 11 Göy</button>
-          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 80% 20%, #0f766e 0%, #0f172a 55%, #050a14 100%)')">Zümrüd</button>
-          <button class="btn-ghost" onclick="setBg('#0a0e17')">Minimalist Tünd</button>
-        </div>
-      </div>
-      <div class="card">
-        <div style="font-weight:600; color:#93c5fd; margin-bottom:6px;">🔒 Kilid Ekranı PIN Kodu</div>
-        <div style="display:flex; gap:8px;">
-          <input id="pin-set" type="password" placeholder="PIN (məs: 1234)" style="background:#141820; border:1px solid #333a48; color:#fff; padding:6px 10px; border-radius:4px;">
-          <button class="btn-primary" onclick="savePin()">Saxla</button>
-          <button class="btn-ghost" onclick="lockPc()">Kilidlə</button>
-        </div>
-      </div>
-    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px; display:flex; flex-direction:column; gap:12px;"></div>
   </div>
 
-  <!-- WINDOWS 11 WIDGETS PANELİ (İSTƏYƏ GÖRƏ QOY / ÇIXAR) -->
+  <!-- WINDOWS 11 WIDGETS PANELİ -->
   <aside id="win-widgets" class="win-widgets">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2e3543; padding-bottom:8px;">
-      <span style="font-weight:600; font-size:13px;">🧩 Windows Widgets</span>
+      <span style="font-weight:600; font-size:13px;">🧩 CoreOS Widgets</span>
       <button class="btn-ghost" style="padding:2px 8px;" onclick="toggleWidgets()">✕</button>
     </div>
     <div style="display:flex; flex-wrap:wrap; gap:5px;">
@@ -677,9 +648,9 @@
     </div>
   </aside>
 
-  <!-- WINDOWS 11 START MENU -->
+  <!-- COREOS START MENU -->
   <div id="win-start" class="win-start">
-    <div style="font-size:12px; font-weight:600; color:#93c5fd; margin-bottom:10px;">Bütün Proqramlar (Pinned)</div>
+    <div style="font-size:12px; font-weight:600; color:#93c5fd; margin-bottom:10px;">Bütün Proqramlar (CoreOS Pinned)</div>
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;">
       <button class="win-icon" style="width:100%;" onclick="openWin('lessons'); toggleStart(false);"><span class="win-icon-glyph">📘</span><span class="win-icon-label">Mövzular</span></button>
       <button class="win-icon" style="width:100%;" onclick="openWin('wizard'); toggleStart(false);"><span class="win-icon-glyph">🩺</span><span class="win-icon-label">Təmir</span></button>
@@ -699,7 +670,7 @@
   <!-- KİLİD EKRANI -->
   <div id="win-lock">
     <div id="lk-time" style="font-size:64px; font-weight:300;">20:13</div>
-    <div id="lk-date" style="font-size:14px; color:#94a3b8; margin-bottom:24px;">23 Noyabr 2026</div>
+    <div id="lk-date" style="font-size:14px; color:#94a3b8; margin-bottom:24px;">25 Noyabr 2026</div>
     <div style="font-size:18px; font-weight:600; margin-bottom:12px;">Salman Bağırzadə</div>
     <form onsubmit="unlockPc(event)" style="display:flex; gap:8px;">
       <input id="pin-in" type="password" placeholder="PIN (boşsa Enter)" style="background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 14px; border-radius:6px; outline:none;">
@@ -707,7 +678,7 @@
     </form>
   </div>
 
-  <!-- WINDOWS 11 TASKBAR -->
+  <!-- COREOS TASKBAR -->
   <footer class="win-taskbar">
     <!-- Sol: Widgets düyməsi -->
     <div class="tb-left">
@@ -716,19 +687,26 @@
       </button>
     </div>
 
-    <!-- Mərkəz: Start və Proqramlar -->
+    <!-- Mərkəz: CoreOS Start, Search və Proqramlar -->
     <div class="tb-center">
-      <button class="tb-btn" onclick="toggleStart()" title="Start">
-        <span style="display:grid; grid-template-columns:repeat(2,6px); gap:1.5px;">
-          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
-          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
-        </span>
+      <button class="tb-btn" onclick="toggleStart()" title="CoreOS Start">
+        <!-- CoreOS 4-rəngli + Mərkəz Dairə Loqosu -->
+        <svg width="22" height="22" viewBox="0 0 100 100" style="border-radius:5px;flex-shrink:0;">
+          <rect width="100" height="100" rx="22" fill="#181e29"/>
+          <rect x="14" y="14" width="33" height="33" rx="8" fill="#4f8ff7"/>
+          <rect x="53" y="14" width="33" height="33" rx="8" fill="#2cc990"/>
+          <rect x="14" y="53" width="33" height="33" rx="8" fill="#f59e42"/>
+          <rect x="53" y="53" width="33" height="33" rx="8" fill="#8b5cf6"/>
+          <circle cx="50" cy="50" r="17" fill="#0f172a"/>
+          <circle cx="50" cy="50" r="11" fill="#2cc990"/>
+          <circle cx="50" cy="50" r="7" fill="#ffffff"/>
+        </svg>
       </button>
+      <button class="tb-btn" onclick="toggleWin('ai')" title="CoreOS AI">🤖</button>
       <button class="tb-btn" onclick="toggleWin('lessons')" title="Mövzular & Test">📘</button>
-      <button class="tb-btn" onclick="toggleWin('wizard')" title="Təmir Köməkçisi">🩺</button>
       <button class="tb-btn" onclick="toggleWin('cmd')" title="CMD / Terminal">⬛</button>
+      <button class="tb-btn" onclick="toggleWin('powershell')" title="PowerShell">🔷</button>
       <button class="tb-btn" onclick="toggleWin('explorer')" title="This PC">💻</button>
-      <button class="tb-btn" onclick="toggleWin('taskmgr')" title="Task Manager">📊</button>
       <button class="tb-btn" onclick="toggleWin('settings')" title="Settings">⚙️</button>
     </div>
 
@@ -738,14 +716,14 @@
       <span style="padding:0 4px;">🔊 🌐</span>
       <div style="text-align:right; line-height:1.2; padding:0 4px;">
         <div id="tb-time">20:13</div>
-        <div id="tb-date" style="font-size:10px; color:#94a3b8;">23.11.2026</div>
+        <div id="tb-date" style="font-size:10px; color:#94a3b8;">25.11.2026</div>
       </div>
       <button class="tb-btn" style="padding:0 6px;" onclick="minAll()" title="Show Desktop">|</button>
     </div>
   </footer>
 
   <script>
-    // SLAYDDAKI (emeliyyat.sistemleri2.pptx) BÜTÜN MÖVZULAR, CƏDVƏLLƏR VƏ TEST SUALLARI
+    // SLAYDDAKI BÜTÜN MÖVZULAR, CƏDVƏLLƏR VƏ TEST SUALLARI
     const modules = [
       {
         title: "1. Hardware və Software Təsnifatı",
@@ -1084,7 +1062,7 @@
       const arg = parts.slice(1).join(' ');
 
       if (cmd === 'help') {
-        out.innerHTML += `<div style="color:#93c5fd;">Windows Diaqnostika: sfc /scannow, dism, chkdsk, ipconfig, arp -a, ping, tracert, nslookup, netstat -ano, wmic, tasklist, systeminfo, cls</div><div style="color:#4ade80;">Linux Əmrləri: ls, dir, pwd, whoami, uname, neofetch, mkdir, touch, cat, rm, clear</div>`;
+        out.innerHTML += `<div style="color:#93c5fd;">Windows Diaqnostika: sfc /scannow, dism, chkdsk, ipconfig, arp -a, ping, tracert, nslookup, netstat -ano, wmic, tasklist, systeminfo, gpupdate, cls</div><div style="color:#4ade80;">Linux Əmrləri: ls, dir, pwd, whoami, uname, neofetch, mkdir, touch, cat, rm, ifconfig, clear</div>`;
       } else if (cmd === 'cls' || cmd === 'clear') {
         out.innerHTML = '';
       } else if (cmd === 'ls' || cmd === 'dir') {
@@ -1094,7 +1072,7 @@
       } else if (cmd === 'whoami') {
         out.innerHTML += `<div>desktop-coreos\\salman (Salman Bağırzadə · Kşats-25/01)</div>`;
       } else if (cmd === 'uname' || cmd === 'neofetch') {
-        out.innerHTML += `<pre style="color:#38bdf8; margin:4px 0;">OS: Windows 11 / Linux Hybrid Lab\nHost: ASUS Vivobook S16 (Core 5 210H, 16GB DDR5)\nGroup: Ksats-25/01 (ADPU Pedaqoji Kolleci)</pre>`;
+        out.innerHTML += `<pre style="color:#38bdf8; margin:4px 0;">OS: CoreOS / Windows 11 Hybrid Lab\nHost: ASUS Vivobook S16 (Core 5 210H, 16GB DDR5)\nGroup: Ksats-25/01 (ADPU Pedaqoji Kolleci)</pre>`;
       } else if (cmd === 'mkdir' && arg) {
         vfs.folders.push(arg); renderVfs(); out.innerHTML += `<div>Qovluq yaradıldı: ${arg}</div>`;
       } else if (cmd === 'touch' && arg) {
@@ -1109,13 +1087,15 @@
         out.innerHTML += `<div style="color:#4ade80;">[==========================100.0%==========================] The restore operation completed successfully.</div>`;
       } else if (cmd === 'chkdsk') {
         out.innerHTML += `<div style="color:#4ade80;">Windows has scanned the file system and found no problems. 0 KB in bad sectors.</div>`;
-      } else if (cmd === 'ipconfig') {
-        out.innerHTML += `<div>Ethernet adapter Ethernet0:\n   IPv4 Address. . . : 192.168.1.105\n   Subnet Mask . . . : 255.255.255.0\n   Default Gateway . : 192.168.1.1</div>`;
+      } else if (cmd === 'gpupdate') {
+        out.innerHTML += `<div style="color:#4ade80;">Computer Policy update has completed successfully.\nUser Policy update has completed successfully.</div>`;
+      } else if (cmd === 'ipconfig' || cmd === 'ifconfig') {
+        out.innerHTML += `<div>Ethernet adapter Ethernet0:\n   IPv4 Address. . . : 192.168.1.105\n   Subnet Mask . . . : 255.255.255.0\n   Default Gateway . : 192.168.1.1\n   DNS Servers . . . : 8.8.8.8, 1.1.1.1</div>`;
       } else if (cmd === 'arp') {
         out.innerHTML += `<div>Interface: 192.168.1.105 --- 0x4\n  Internet Address      Physical Address      Type\n  192.168.1.1           d8-0d-17-4a-92-10     dynamic</div>`;
       } else if (cmd === 'ping') {
         const h = arg || '8.8.8.8';
-        out.innerHTML += `<div>Pinging ${h} with 32 bytes of data:\nReply from ${h}: bytes=32 time=11ms TTL=118</div>`;
+        out.innerHTML += `<div>Pinging ${h} with 32 bytes of data:\nReply from ${h}: bytes=32 time=11ms TTL=118\nReply from ${h}: bytes=32 time=10ms TTL=118</div>`;
       } else if (cmd === 'tracert') {
         out.innerHTML += `<div>Tracing route to ${arg || 'google.com'}:\n  1    1 ms     1 ms     1 ms  192.168.1.1\n  2   12 ms    11 ms    12 ms  142.250.185.78</div>`;
       } else if (cmd === 'nslookup') {
@@ -1127,7 +1107,7 @@
       } else if (cmd === 'tasklist') {
         out.innerHTML += `<div>System Idle Process   0   16 K\nexplorer.exe       1420   85,120 K\ncmd.exe            3104   12,400 K</div>`;
       } else if (cmd === 'systeminfo') {
-        out.innerHTML += `<div>Host Name: DESKTOP-SALMAN | OS: Windows 11 Pro | CPU: Intel Core 5 210H | RAM: 16,384 MB</div>`;
+        out.innerHTML += `<div>Host Name: DESKTOP-SALMAN | OS: CoreOS / Windows 11 Pro | CPU: Intel Core 5 210H | RAM: 16,384 MB</div>`;
       } else {
         out.innerHTML += `<div style="color:#f87171;">'${cmd}' tanınmadı. Bütün əmrlər üçün 'help' yazın.</div>`;
       }
@@ -1195,7 +1175,7 @@
   </script>
 
   <script>
-    /* extras.js — Windows 11 İş Masası üçün əlavələr */
+    /* extras.js — CoreOS Əsas Əlavələr */
     (function () {
       const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
       const st = document.createElement('style');
@@ -1214,7 +1194,7 @@
 .wire.sel{border-color:#fff}`;
       document.head.appendChild(st);
 
-      /* ---------- Bildiriş (toast) ---------- */
+      /* Bildiriş (toast) */
       const tw = document.createElement('div'); tw.id = 'toasts'; document.body.appendChild(tw);
       window.notify = (t, m) => {
         const d = document.createElement('div'); d.className = 'toast';
@@ -1222,7 +1202,7 @@
         tw.appendChild(d); setTimeout(() => d.remove(), 4500);
       };
 
-      /* ---------- Yeni proqram yaradıcı ---------- */
+      /* Yeni proqram yaradıcı */
       let n = 0;
       function mkApp(id, icon, label, title, w, h, html, init) {
         const d = document.createElement('div'); d.id = 'win-' + id; d.className = 'win-window';
@@ -1236,7 +1216,6 @@
         $('#win-start > div:nth-child(2)').appendChild(s);
         init && init(d);
       }
-
       window.mkApp = mkApp;
 
       /* 1. PAINT */
@@ -1314,12 +1293,7 @@
           $('#ps-l').oninput = chk; chk();
         });
 
-      /* 6. BRAUZER */
-      mkApp('browser', '🧭', 'Brauzer', 'Mini Brauzer', 760, 480,
-        `<div style="display:flex;gap:6px;margin-bottom:8px"><input class="inp" id="br-u" value="https://www.wikipedia.org" style="flex:1"><button class="btn-primary" id="br-g">Get</button></div><iframe id="br-f" src="https://www.wikipedia.org" style="width:100%;height:calc(100% - 70px);min-height:300px;border:1px solid #333a48;border-radius:6px;background:#fff"></iframe><div style="color:#64748b;font-size:11px;margin-top:4px">Bəzi saytlar (Google, YouTube) iframe-də açılmağa icazə vermir.</div>`,
-        () => { const go = () => { let u = $('#br-u').value.trim(); if (!/^https?:/.test(u)) u = 'https://' + u; $('#br-f').src = u; }; $('#br-g').onclick = go; $('#br-u').onkeydown = e => e.key == 'Enter' && go(); });
-
-      /* 7. TƏQVİM + SEKUNDÖLÇƏN */
+      /* 6. TƏQVİM + SEKUNDÖLÇƏN */
       const AY = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun', 'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
       mkApp('calendar', '📅', 'Təqvim', 'Təqvim və Saniyəölçən', 340, 480,
         `<div style="display:flex;justify-content:space-between;align-items:center"><button class="btn-ghost" id="ca-p">◀</button><b id="ca-t"></b><button class="btn-ghost" id="ca-n">▶</button></div><table class="cal" style="width:100%;margin:8px 0"><thead><tr><td>B.e</td><td>Ç.a</td><td>Ç</td><td>C.a</td><td>C</td><td>Ş</td><td>B</td></tr></thead><tbody id="ca-b"></tbody></table><div class="card" style="text-align:center"><div id="sw-t" style="font-size:28px;font-family:Consolas">00:00.0</div><button class="btn-primary" id="sw-s">Başla</button> <button class="btn-ghost" id="sw-r">Sıfırla</button></div>`,
@@ -1340,12 +1314,12 @@
         });
       $('#tb-time').parentElement.style.cursor = 'pointer'; $('#tb-time').parentElement.onclick = () => openWin('calendar');
 
-      /* 8. YAPIŞQAN QEYDLƏR (yadda qalır) */
+      /* 7. YAPIŞQAN QEYDLƏR */
       mkApp('sticky', '🗒️', 'Qeydlər', 'Yapışqan Qeydlər', 320, 300,
         `<textarea id="sk-t" class="inp" style="width:100%;height:100%;min-height:200px;background:#fde68a;color:#1f2937;font-size:14px;resize:none" placeholder="Qeyd yazın (avtomatik yadda saxlanılır)..."></textarea>`,
         () => { let v = ''; try { v = localStorage.getItem('sticky') || ''; } catch (e) { } $('#sk-t').value = v; $('#sk-t').oninput = e => { try { localStorage.setItem('sticky', e.target.value); } catch (x) { } }; });
 
-      /* ---------- Sürətli Parametrlər (səs/şəbəkə ikonası) ---------- */
+      /* Sürətli Parametrlər */
       const br = document.createElement('div'); br.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:9400'; document.body.appendChild(br);
       const nl = document.createElement('div'); nl.style.cssText = 'position:fixed;inset:0;background:rgba(255,140,0,.18);mix-blend-mode:multiply;pointer-events:none;z-index:9401;display:none'; document.body.appendChild(nl);
       const qs = document.createElement('div'); qs.id = 'qs';
@@ -1357,15 +1331,15 @@
       $('#q-nl').onchange = e => nl.style.display = e.target.checked ? 'block' : 'none';
       $('#q-wf').onchange = e => { tray.textContent = e.target.checked ? '🔊 🌐' : '🔊 ✈️'; notify('Wi-Fi', e.target.checked ? 'Qoşuldu' : 'Söndürüldü'); };
 
-      /* ---------- Sağ klik menyusu ---------- */
+      /* Sağ klik menyusu */
       const cx = document.createElement('div'); cx.id = 'ctx'; document.body.appendChild(cx);
       const BG = ['radial-gradient(circle at 20% 25%, #1d4ed8 0%, #0f172a 48%, #060b16 100%)', 'radial-gradient(circle at 80% 20%, #0f766e 0%, #0f172a 55%, #050a14 100%)', 'radial-gradient(circle at 50% 80%, #7c3aed 0%, #0f172a 55%, #050a14 100%)', '#0a0e17']; let bi = 0;
-      const items = [['📁 Yeni qovluq', () => { const nm = prompt('Qovluq adı:'); if (nm) { vfs.folders.push(nm); renderVfs(); notify('Yaradıldı', nm); } }], ['⬛ CMD aç', () => openWin('cmd')], ['🎨 Paint aç', () => openWin('paint')], ['🖼️ Divar kağızını dəyiş', () => setBg(BG[bi++ % BG.length])], ['⚙️ Settings', () => openWin('settings')], ['🟦 BSOD simulyasiyası', () => bsod()]];
+      const items = [['🤖 CoreOS AI aç', () => openWin('ai')], ['📁 Yeni qovluq', () => { const nm = prompt('Qovluq adı:'); if (nm) { vfs.folders.push(nm); renderVfs(); notify('Yaradıldı', nm); } }], ['⬛ CMD aç', () => openWin('cmd')], ['🔷 PowerShell aç', () => openWin('powershell')], ['📷 Kamera aç', () => openWin('camera')], ['🖼️ Divar kağızını dəyiş', () => setBg(BG[bi++ % BG.length])], ['🟦 BSOD simulyasiyası', () => bsod()]];
       items.forEach(([t, f]) => { const d = document.createElement('div'); d.textContent = t; d.onclick = f; cx.appendChild(d); });
       $('.desktop-area').addEventListener('contextmenu', e => { e.preventDefault(); cx.style.display = 'block'; cx.style.left = Math.min(e.clientX, innerWidth - 220) + 'px'; cx.style.top = Math.min(e.clientY, innerHeight - 260) + 'px'; });
       document.addEventListener('click', () => { cx.style.display = 'none'; qs.style.display = 'none'; });
 
-      /* ---------- BSOD simulyasiyası (dərs üçün) ---------- */
+      /* BSOD simulyasiyası */
       function bsod() {
         const b = document.createElement('div');
         b.style.cssText = 'position:fixed;inset:0;background:#0078d7;color:#fff;z-index:99999;padding:8vw;font-family:Segoe UI,sans-serif;cursor:pointer';
@@ -1373,19 +1347,19 @@
         b.onclick = () => b.remove(); document.body.appendChild(b);
       }
 
-      /* ---------- Start menyusunda axtarış ---------- */
-      const si = document.createElement('input'); si.className = 'inp'; si.placeholder = '🔍 Proqram axtar...'; si.style.cssText = 'width:100%;margin-bottom:10px;padding:8px';
+      /* Start menyusunda axtarış */
+      const si = document.createElement('input'); si.className = 'inp'; si.placeholder = '🔍 CoreOS proqramlarında axtar...'; si.style.cssText = 'width:100%;margin-bottom:10px;padding:8px';
       $('#win-start').insertBefore(si, $('#win-start').firstChild);
       si.oninput = () => $$('#win-start .win-icon').forEach(b => b.style.display = b.textContent.toLowerCase().includes(si.value.toLowerCase()) ? '' : 'none');
 
-      /* ---------- Taskbar-da açıq proqramlar ---------- */
+      /* Taskbar-da açıq proqramlar */
       const ta = document.createElement('div'); ta.style.cssText = 'display:flex;gap:2px'; $('.tb-center').appendChild(ta); let sig = '';
       setInterval(() => {
         const o = $$('.win-window.open'), s = o.map(w => w.id).join(); if (s === sig) return; sig = s; ta.innerHTML = '';
         o.forEach(w => { const t = w.querySelector('.win-title').textContent.trim(), b = document.createElement('button'); b.className = 'tb-btn active'; b.textContent = t.split(' ')[0]; b.title = t; b.onclick = () => { w.style.zIndex = ++zIdx; }; ta.appendChild(b); });
       }, 400);
 
-      /* ---------- Qısayollar, iki dəfə klik, toxunma ilə sürüşdürmə ---------- */
+      /* Qısayollar və sürüşdürmə */
       document.addEventListener('keydown', e => {
         if (e.ctrlKey && e.shiftKey && e.key == 'Escape') { e.preventDefault(); openWin('taskmgr'); }
         if (e.ctrlKey && e.altKey && e.key.toLowerCase() == 't') { e.preventDefault(); openWin('cmd'); }
@@ -1401,7 +1375,7 @@
         document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', up);
       }, { passive: true });
 
-      /* ---------- Task Manager canlı rəqəmlər ---------- */
+      /* Task Manager canlı rəqəmlər */
       setInterval(() => {
         const c = $('#tm-cpu'), r = $('#tm-ram'); if (!c || !r) return;
         const heavy = !!$('#proc-heavy'), v = heavy ? 80 + Math.random() * 15 | 0 : 6 + Math.random() * 8 | 0;
@@ -1409,14 +1383,14 @@
         const g = heavy ? 9.5 + Math.random() : 6 + Math.random() * .4; r.textContent = (g / 16 * 100 | 0) + '% (' + g.toFixed(1) + '/16 GB)';
       }, 1500);
 
-      /* ---------- Divar kağızını yadda saxla ---------- */
+      /* Divar kağızını yadda saxla */
       const _sb = window.setBg; window.setBg = bg => { _sb(bg); try { localStorage.setItem('bg', bg); } catch (e) { } };
       try { const s = localStorage.getItem('bg'); if (s) _sb(s); } catch (e) { }
 
-      /* ---------- Test 100% olanda təbrik ---------- */
+      /* Test 100% olanda təbrik */
       const _ca = window.checkAns; window.checkAns = (...a) => { _ca(...a); if ($('#wg-pct').textContent == '100%') notify('🎓 Təbrik edirik!', 'Bütün test suallarını düzgün cavablandırdınız.'); };
 
-      setTimeout(() => notify('👋 Xoş gəldiniz, Salman', 'Yeni proqramlar iş masasındadır. Sağ klik və ya Start-ı yoxlayın.'), 600);
+      setTimeout(() => notify('👋 Xoş gəldiniz, Salman', 'CoreOS tam yeniləndi! Aşağıdakı axtarış qutusunu və CoreOS AI-ı yoxlayın.'), 600);
     })();
 
     /* ===== v2: Chrome, Parametrlər Pro, Telefon / Komputer rejimi ===== */
@@ -1428,7 +1402,6 @@
       const BG = ['radial-gradient(circle at 20% 25%, #1d4ed8 0%, #0f172a 48%, #060b16 100%)', 'radial-gradient(circle at 80% 20%, #0f766e 0%, #0f172a 55%, #050a14 100%)', 'radial-gradient(circle at 50% 80%, #7c3aed 0%, #0f172a 55%, #050a14 100%)', 'linear-gradient(135deg,#f97316,#be123c 60%,#1e1b4b)'];
       const AC = ['#0067c0', '#16a34a', '#dc2626', '#9333ea', '#ea580c', '#0891b2'];
 
-      /* ---- Telefon rejimi CSS ---- */
       const ps = document.createElement('style');
       ps.textContent = `body.phone .win-window.open{top:0!important;left:0!important;width:100vw!important;max-width:100vw!important;height:calc(100dvh - 48px)!important;max-height:none!important;border-radius:0!important;border:0!important;resize:none!important}
 body.phone .win-btn[onclick^="maxWin"]{display:none}body.phone .win-titlebar{height:44px!important}body.phone .win-btn{width:54px!important;font-size:16px}
@@ -1461,7 +1434,7 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       mb.onclick = () => { c.mode = document.body.classList.contains('phone') ? 'desktop' : 'phone'; save(); setMode(); };
       addEventListener('resize', setMode);
 
-      /* ---- CHROME ---- */
+      /* CHROME */
       mkApp('chrome', '🌍', 'Chrome', 'Google Chrome', 880, 540,
         `<div style="display:flex;flex-direction:column;height:100%;min-height:340px"><div id="ch-tabs" style="display:flex;gap:4px;margin-bottom:6px;overflow-x:auto"></div><div style="display:flex;gap:6px;margin-bottom:6px"><button class="btn-ghost" id="ch-rl">⟳</button><input class="inp" id="ch-u" style="flex:1;min-width:0" placeholder="Axtar və ya ünvan yaz"><button class="btn-primary" id="ch-g">Get</button><button class="btn-ghost" id="ch-ex" title="Real brauzer tabında aç">↗</button></div><div id="ch-bm" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap"></div><div id="ch-v" style="flex:1;min-height:240px;position:relative"></div><div style="color:#64748b;font-size:11px;margin-top:4px">Google, YouTube kimi saytlar iframe-də açılmağa icazə vermir — onlar üçün ↗ düyməsindən istifadə edin.</div></div>`,
         () => {
@@ -1482,13 +1455,13 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
           add();
         });
 
-      /* ---- PARAMETRLƏR PRO ---- */
+      /* PARAMETRLƏR PRO */
       const sw = $('#win-settings'); sw.style.width = '700px'; sw.style.height = 'min(540px,calc(100dvh - 70px))';
       const body = sw.children[1]; body.style.cssText = 'flex:1;display:flex;overflow:hidden;font-size:12.5px;padding:0';
       body.innerHTML = '<div id="st-nav" style="width:170px;background:#141820;border-right:1px solid #2e3543;padding:8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0"></div><div id="st-pane" style="flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px"></div>';
       const P = {
-        '💻 Sistem': () => `<div class="card"><b style="color:#93c5fd">Cihaz</b><br>ASUS Vivobook S16 · Intel Core 5 210H · 16 GB DDR5 · Windows 11<br>Ekran: ${innerWidth}×${innerHeight} · Dil: ${navigator.language} · ${navigator.onLine ? 'Onlayn' : 'Oflayn'}</div><div class="card"><b style="color:#93c5fd">Tələbə</b><br>Salman Bağırzadə Mehman · Kşats-25/01<br>ADPU Pedaqoji Kolleci · Müəllim: Samirə Kərimova</div><div class="card"><button class="btn-ghost" id="s-fs">⛶ Tam ekran</button> <button class="btn-ghost" id="s-rs" style="color:#f87171">Bütün ayarları sıfırla</button></div>`,
-        '🎨 Fərdiləşdirmə': () => `<div class="card"><b>Divar kağızı</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${BG.map((b, i) => `<button class="btn-ghost s-bg" data-i="${i}" style="width:54px;height:36px;background:${b}"></button>`).join('')}</div><label>Rəng: <input type="color" id="s-bgc" value="#0a0e17"></label><br><label>Şəkil: <input type="file" id="s-bgf" accept="image/*"></label></div><div class="card"><b>Vurğu rəngi</b><div style="display:flex;gap:6px;margin-top:8px">${AC.map(a => `<button class="s-ac" data-c="${a}" style="width:28px;height:28px;border-radius:50%;border:2px solid #fff3;background:${a};cursor:pointer"></button>`).join('')}</div></div><div class="card"><label>İkon ölçüsü <input type="range" id="s-ic" min="60" max="110" value="${c.icon}"></label><br><label>Taskbar şəffaflığı <input type="range" id="s-op" min="40" max="100" value="${c.tbop}"></label></div>`,
+        '💻 Sistem': () => `<div class="card"><b style="color:#93c5fd">Cihaz</b><br>ASUS Vivobook S16 · Intel Core 5 210H · 16 GB DDR5 · CoreOS / Windows 11<br>Ekran: ${innerWidth}×${innerHeight} · Dil: ${navigator.language} · ${navigator.onLine ? 'Onlayn' : 'Oflayn'}</div><div class="card"><b style="color:#93c5fd">Tələbə</b><br>Salman Bağırzadə Mehman · Kşats-25/01<br>ADPU Pedaqoji Kolleci · Müəllim: Samirə Kərimova</div><div class="card"><button class="btn-ghost" id="s-fs">⛶ Tam ekran</button> <button class="btn-ghost" id="s-rs" style="color:#f87171">Bütün ayarları sıfırla</button></div>`,
+        '🎨 Fərdiləşdirmə': () => `<div class="card"><b>Divar kağızı</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${BG.map((b, i) => `<button class="btn-ghost s-bg" data-i="${i}" style="width:54px;height:36px;background:${b}"></button>`).join('')}</div><button class="btn-ghost" id="s-wp-img" style="margin-bottom:6px;">🖼️ Şəkilli Divar Kağızı</button><br><label>Rəng: <input type="color" id="s-bgc" value="#0a0e17"></label><br><label>Şəkil yüklə: <input type="file" id="s-bgf" accept="image/*"></label></div><div class="card"><b>Vurğu rəngi</b><div style="display:flex;gap:6px;margin-top:8px">${AC.map(a => `<button class="s-ac" data-c="${a}" style="width:28px;height:28px;border-radius:50%;border:2px solid #fff3;background:${a};cursor:pointer"></button>`).join('')}</div></div><div class="card"><label>İkon ölçüsü <input type="range" id="s-ic" min="60" max="110" value="${c.icon}"></label><br><label>Taskbar şəffaflığı <input type="range" id="s-op" min="40" max="100" value="${c.tbop}"></label></div>`,
         '🖥️ Taskbar və Rejim': () => `<div class="card" style="display:grid;gap:10px"><label>Taskbar mövqeyi <select class="inp" id="s-tp"><option value="bottom">Aşağı</option><option value="top">Yuxarı</option></select></label><label>Hizalanma <select class="inp" id="s-ta"><option value="center">Mərkəz</option><option value="left">Sol</option></select></label><label>İnterfeys rejimi <select class="inp" id="s-md"><option value="auto">Avtomatik</option><option value="phone">📱 Telefon</option><option value="desktop">💻 Komputer</option></select></label></div>`,
         '👤 Hesab': () => `<div class="card" style="display:grid;gap:8px"><label>Ad <input class="inp" id="s-nm"></label><div><input id="pin-set" type="password" class="inp" placeholder="PIN"> <button class="btn-primary" onclick="savePin()">PIN saxla</button> <button class="btn-ghost" onclick="lockPc()">🔒 Kilidlə</button></div></div>`
       };
@@ -1497,6 +1470,7 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
         '💻 Sistem': () => { bind('#s-fs', 'onclick', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()); bind('#s-rs', 'onclick', () => { if (confirm('Bütün ayarlar sıfırlansın?')) { localStorage.removeItem('cfg'); localStorage.removeItem('bg'); location.reload(); } }); },
         '🎨 Fərdiləşdirmə': () => {
           $$('.s-bg').forEach(b => b.onclick = () => setBg(BG[b.dataset.i]));
+          bind('#s-wp-img', 'onclick', () => { localStorage.removeItem('bg'); const im = $('#wallpaper-img'); im.style.display = 'block'; im.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'; });
           bind('#s-bgc', 'oninput', e => setBg(e.target.value));
           bind('#s-bgf', 'onchange', e => { const r = new FileReader(); r.onload = () => setBg(`url("${r.result}") center/cover`); e.target.files[0] && r.readAsDataURL(e.target.files[0]); });
           $$('.s-ac').forEach(b => b.onclick = () => { c.accent = b.dataset.c; save(); apply(); });
@@ -1511,6 +1485,598 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       }
       Object.keys(P).forEach(k => { const b = document.createElement('button'); b.className = 'btn-ghost'; b.style.textAlign = 'left'; b.textContent = k; b.onclick = () => show(k); $('#st-nav').appendChild(b); });
       show('💻 Sistem'); apply();
+    })();
+
+    /* ===== v3: Search Bar, CoreOS AI, Keçidlər, Get Help, Mesajlar, PowerShell, Kamera, Qalereya, Musiqi, Monitor, Pomodoro, Səs Yazıcı ===== */
+    (function () {
+      const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+
+      /* 1. TASKBAR SEARCH BAR */
+      const sbWrap = document.createElement('div');
+      sbWrap.style.cssText = 'position:relative;display:flex;align-items:center;margin:0 6px;';
+      sbWrap.innerHTML = `
+        <input id="tb-search-inp" type="text" placeholder="🔍 Axtar (proqram, dərs, əmr)..." 
+          style="height:32px;width:185px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.16);border-radius:16px;padding:0 12px;color:#fff;font-size:12px;outline:none;transition:width .2s;">
+        <div id="tb-search-res" style="display:none;position:fixed;bottom:56px;left:50%;transform:translateX(-50%);width:360px;max-width:92vw;max-height:360px;overflow-y:auto;background:rgba(24,29,39,0.98);border:1px solid #384152;border-radius:10px;padding:8px;box-shadow:0 15px 40px #000c;z-index:9200;"></div>
+      `;
+      const tbCenter = $('.tb-center');
+      tbCenter.insertBefore(sbWrap, tbCenter.children[1]);
+
+      const sInp = $('#tb-search-inp'), sRes = $('#tb-search-res');
+      sInp.onfocus = () => { sInp.style.width = '235px'; runGlobalSearch(); };
+      sInp.onblur = () => { setTimeout(() => { sInp.style.width = '185px'; sRes.style.display = 'none'; }, 200); };
+      sInp.oninput = runGlobalSearch;
+
+      function runGlobalSearch() {
+        const q = sInp.value.trim().toLowerCase();
+        sRes.style.display = 'block';
+        let html = '';
+
+        const apps = $$('.desktop-icons .win-icon').map(b => ({
+          icon: b.querySelector('.win-icon-glyph')?.textContent || '📦',
+          name: b.querySelector('.win-icon-label')?.textContent || '',
+          fn: () => b.click()
+        })).filter(a => !q || a.name.toLowerCase().includes(q));
+
+        if (apps.length) {
+          html += `<div style="font-size:10.5px;color:#94a3b8;padding:4px 6px;font-weight:600;">PROQRAMLAR</div>`;
+          apps.slice(0, 6).forEach((a, idx) => {
+            html += `<div class="sr-app" data-i="${idx}" style="padding:7px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12.5px;" onmouseover="this.style.background='#ffffff18'" onmouseout="this.style.background='transparent'"><span>${a.icon}</span><span>${a.name}</span></div>`;
+          });
+        }
+
+        if (typeof modules !== 'undefined' && q) {
+          const mods = modules.map((m, i) => ({ ...m, i })).filter(m => m.title.toLowerCase().includes(q) || m.theory.toLowerCase().includes(q));
+          if (mods.length) {
+            html += `<div style="font-size:10.5px;color:#38bdf8;padding:6px 6px 2px;font-weight:600;">DƏRS MATERİALLARI</div>`;
+            mods.forEach(m => {
+              html += `<div class="sr-mod" data-m="${m.i}" style="padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;" onmouseover="this.style.background='#ffffff18'" onmouseout="this.style.background='transparent'">📘 ${m.title}</div>`;
+            });
+          }
+        }
+
+        if (q) {
+          html += `<div id="sr-ask-ai" style="margin-top:6px;padding:8px 10px;border-radius:6px;background:#0067c0;cursor:pointer;font-size:12px;font-weight:600;">🤖 CoreOS AI-dan soruş: "${sInp.value}"</div>`;
+        }
+
+        sRes.innerHTML = html || `<div style="padding:10px;color:#94a3b8;font-size:12px;">Nəticə tapılmadı.</div>`;
+        $$('.sr-app').forEach(el => el.onmousedown = () => apps[+el.dataset.i].fn());
+        $$('.sr-mod').forEach(el => el.onmousedown = () => { openWin('lessons'); renderLesson(+el.dataset.m); });
+        const aiBtn = $('#sr-ask-ai');
+        if (aiBtn) aiBtn.onmousedown = () => { openWin('ai'); $('#ai-inp').value = sInp.value; $('#ai-send').click(); };
+      }
+
+      /* 2. COREOS AI KÖMƏKÇİ */
+      mkApp('ai', '🤖', 'CoreOS AI', 'CoreOS AI — Dərs və Sistem Köməkçisi', 640, 520, `
+        <div style="display:flex;flex-direction:column;height:100%;gap:8px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid #2e3543;">
+            <span style="font-size:11px;color:#94a3b8;align-self:center;">Sürətli suallar:</span>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">APIPA nədir?</button>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">T568B rəngləri</button>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">ATX PSU gərginlikləri</button>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">BSOD həlli</button>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">OSI 7 lay</button>
+            <button class="btn-ghost ai-q" style="font-size:11px;padding:3px 8px;">CHKDSK və SMART</button>
+          </div>
+          <div id="ai-chat" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px;">
+            <div class="card" style="background:#1e293b;border-left:3px solid #38bdf8;">
+              <b>🤖 CoreOS AI:</b> Salam, Salman! Mən sənin sistemindəki bütün <b>10 dərs modulunu</b>, diaqnostika əmrlərini, ATX gərginlik cədvəllərini və T568B sxemlərini bilirəm. İstənilən sualı yaz, həm izah edim, həm də uyğun dərs modulunu açım!
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <input id="ai-inp" class="inp" style="flex:1;padding:9px;" placeholder="Dərs mövzusu və ya texniki sual yazın (məs: chkdsk, DNS, RAM təmizliyi)...">
+            <button id="ai-send" class="btn-primary">Göndər</button>
+          </div>
+        </div>
+      `, () => {
+        const chat = $('#ai-chat'), inp = $('#ai-inp');
+        const addMsg = (who, html, isUser) => {
+          const d = document.createElement('div');
+          d.className = 'card';
+          d.style.cssText = isUser
+            ? 'align-self:flex-end;background:#0067c0;color:#fff;max-width:82%;border:none;'
+            : 'align-self:flex-start;background:#202530;border-left:3px solid #2cc990;max-width:90%;line-height:1.55;';
+          d.innerHTML = `<b>${who}:</b> ${html}`;
+          chat.appendChild(d);
+          chat.scrollTop = chat.scrollHeight;
+        };
+
+        function answerAI(q) {
+          const s = q.toLowerCase();
+          if (typeof modules !== 'undefined') {
+            const matched = modules.map((m, idx) => ({ m, idx })).filter(({ m }) => {
+              const txt = (m.title + ' ' + m.theory + ' ' + m.howToFix + ' ' + m.table).toLowerCase();
+              return s.split(/\s+/).filter(w => w.length > 2).some(w => txt.includes(w));
+            });
+
+            if (matched.length > 0) {
+              const best = matched[0];
+              let extra = '';
+              if (s.includes('t568b') || s.includes('kabel') || s.includes('rj')) {
+                extra = `<br><br><b>Ardıcıllıq:</b> 1. Narıncı-Ağ, 2. Narıncı, 3. Yaşıl-Ağ, 4. Mavi, 5. Mavi-Ağ, 6. Yaşıl, 7. Qəhvəyi-Ağ, 8. Qəhvəyi.`;
+              } else if (s.includes('psu') || s.includes('gərginlik') || s.includes('atx')) {
+                extra = `<br><br><b>Əsas xətlər:</b> Sarı (+12V), Qırmızı (+5V), Narıncı (+3.3V), Bənövşəyi (+5VSB), Boz (PG +2.4V–5V).`;
+              } else if (s.includes('apipa') || s.includes('169')) {
+                extra = `<br><br><b>Həll:</b> DHCP cavab vermir. <code>ipconfig /release</code> sonra <code>ipconfig /renew</code> icra et.`;
+              }
+              return `${best.m.theory}${extra}<br><br><b>🛠️ Təmir yolu:</b> ${best.m.howToFix}
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="btn-primary" onclick="openWin('lessons');renderLesson(${best.idx})">📘 "${best.m.title}" dərsini aç</button>
+                  <button class="btn-ghost" onclick="openWin('cmd')">⬛ CMD-də yoxla</button>
+                </div>`;
+            }
+          }
+          if (s.includes('salam') || s.includes('necəsən')) return 'Salam Salman! Hazıram, hansı dərs mövzusunu və ya kompüter nasazlığını araşdıraq?';
+          return 'Bu mövzu üzrə dəqiq açar söz yaz (məsələn: <b>OSI, APIPA, ATX PSU, BSOD, T568B, CHKDSK, RAM, Task Manager</b>) — dərhal slayd materiallarından cavab verim!';
+        }
+
+        const send = () => {
+          const v = inp.value.trim();
+          if (!v) return;
+          addMsg('👤 Sən', v, true);
+          inp.value = '';
+          setTimeout(() => addMsg('🤖 CoreOS AI', answerAI(v), false), 200);
+        };
+        $('#ai-send').onclick = send;
+        inp.onkeydown = e => e.key === 'Enter' && send();
+        $$('.ai-q').forEach(b => b.onclick = () => { inp.value = b.textContent; send(); });
+      });
+
+      /* 3. PROQRAMLAR VƏ KEÇİDLƏR MƏRKƏZİ */
+      mkApp('hub', '🚀', 'Keçidlər', 'CoreOS Proqramlar & Keçidlər Mərkəzi', 660, 480, `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <b style="color:#93c5fd;">Sürətli Keçidlər və Xarici Alətlər</b>
+          <button class="btn-primary" id="hub-add">+ Yeni Keçid Əlavə Et</button>
+        </div>
+        <div id="hub-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;"></div>
+      `, () => {
+        const defaultLinks = [
+          { icon: '🤖', title: 'CoreOS AI', desc: 'Dərs Köməkçisi', action: () => openWin('ai') },
+          { icon: '📘', title: 'Dərs Modulları', desc: '10 Slayd Bölməsi', action: () => openWin('lessons') },
+          { icon: '🩺', title: 'Təmir Köməkçisi', desc: 'Nasazlıq Tapıcı', action: () => openWin('wizard') },
+          { icon: '🔌', title: 'RJ-45 Trenajor', desc: 'T568B Kabel Testi', action: () => openWin('cable') },
+          { icon: '🌐', title: 'Subnet Calc', desc: 'IP / CIDR Hesabla', action: () => openWin('subnet') },
+          { icon: '⚡', title: 'PSU Tester', desc: 'ATX Gərginlik', action: () => openWin('psu') },
+          { icon: '🌍', title: 'Google Axtarış', desc: 'google.com', url: 'https://www.google.com' },
+          { icon: '▶️', title: 'YouTube', desc: 'Video Dərslər', url: 'https://www.youtube.com' },
+          { icon: '💻', title: 'GitHub', desc: 'Kod Repozitoriyaları', url: 'https://github.com' },
+          { icon: '🛠️', title: 'Speedtest', desc: 'İnternet Sürəti', url: 'https://www.speedtest.net' }
+        ];
+        let customLinks = [];
+        try { customLinks = JSON.parse(localStorage.getItem('coreos_links') || '[]'); } catch (e) {}
+
+        function renderHub() {
+          const all = [...defaultLinks, ...customLinks];
+          $('#hub-grid').innerHTML = all.map((l, i) => `
+            <div class="card hub-item" data-i="${i}" style="cursor:pointer;text-align:center;transition:transform .15s;" onmouseover="this.style.borderColor='#38bdf8'" onmouseout="this.style.borderColor='#2e3543'">
+              <div style="font-size:28px;margin-bottom:4px;">${l.icon || '🔗'}</div>
+              <div style="font-weight:600;font-size:12.5px;">${l.title}</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${l.desc || l.url}</div>
+            </div>
+          `).join('');
+          $$('.hub-item').forEach(el => el.onclick = () => {
+            const item = all[+el.dataset.i];
+            if (item.action) item.action();
+            else if (item.url) window.open(item.url, '_blank');
+          });
+        }
+        $('#hub-add').onclick = () => {
+          const title = prompt('Keçidin adı (məs: AutoCAD Web):');
+          if (!title) return;
+          let url = prompt('Sayt ünvanı (URL):', 'https://');
+          if (!url) return;
+          if (!/^https?:/.test(url)) url = 'https://' + url;
+          customLinks.push({ icon: '🔗', title, desc: new URL(url).hostname, url });
+          try { localStorage.setItem('coreos_links', JSON.stringify(customLinks)); } catch (e) {}
+          renderHub();
+          notify('🚀 Əlavə edildi', title + ' keçidlərə düşdü.');
+        };
+        renderHub();
+      });
+
+      /* 4. GET HELP */
+      mkApp('help', '❓', 'Get Help', 'CoreOS Get Help — Kömək Mərkəzi', 640, 480, `
+        <div style="display:flex;gap:12px;height:100%;">
+          <div style="width:180px;border-right:1px solid #2e3543;padding-right:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <button class="btn-ghost gh-cat" data-c="start" style="text-align:left;">🏠 Başlanğıc Bələdçi</button>
+            <button class="btn-ghost gh-cat" data-c="net" style="text-align:left;">🌐 Şəbəkə Problemləri</button>
+            <button class="btn-ghost gh-cat" data-c="hw" style="text-align:left;">🔧 Aparat & Qızma</button>
+            <button class="btn-ghost gh-cat" data-c="keys" style="text-align:left;">⌨️ Klaviatura Qısayolları</button>
+            <button class="btn-primary" onclick="openWin('ai')" style="margin-top:auto;">🤖 AI Köməkçiyə Yaz</button>
+          </div>
+          <div id="gh-body" style="flex:1;overflow-y:auto;line-height:1.6;"></div>
+        </div>
+      `, () => {
+        const topics = {
+          start: `<h3 style="margin-top:0;color:#38bdf8;">CoreOS Sisteminə Xoş Gəlmisiniz</h3>
+            <p>Bu mühit ADPU Pedaqoji Kolleci (<b>Kşats-25/01</b>) Sistem və Şəbəkə Diaqnostikası fənni üçün hazırlanmış tam funksional iş masasıdır.</p>
+            <div class="card"><b>Nələr edə bilərsiniz?</b><br>• <b>Mövzular & Test:</b> 10 dərs modulunu oxuyun və 16 suallıq testi işləyin.<br>• <b>CoreOS AI:</b> Dərs materialları barədə istənilən sualı soruşun.<br>• <b>CMD / PowerShell:</b> Real şəbəkə və sistem əmrlərini sınayın.<br>• <b>Kamera & Qalereya:</b> Şəkil çəkin və qalereyada saxlayın.</div>`,
+          net: `<h3 style="margin-top:0;color:#38bdf8;">Şəbəkə Nasazlıqlarının Həlli</h3>
+            <div class="card" style="margin-bottom:8px;"><b>1. Sarı üçbucaq / İnternet yoxdur:</b><br>CMD-ni açın və ardıcıl yazın: <code>ipconfig /release</code> → <code>ipconfig /renew</code> → <code>ipconfig /flushdns</code></div>
+            <div class="card"><b>2. Ping Testi Ardıcıllığı:</b><br>1) <code>ping 127.0.0.1</code> (Şəbəkə kartı)<br>2) <code>ping 192.168.1.1</code> (Router)<br>3) <code>ping 8.8.8.8</code> (İnternet)</div>`,
+          hw: `<h3 style="margin-top:0;color:#38bdf8;">Aparat və Soyutma Baxımı</h3>
+            <div class="card">• <b>CPU 90°C+ olarsa:</b> Radiator tozdan təmizlənməli və termopasta yenilənməlidir.<br>• <b>Kompüter açılmırsa:</b> RAM modullarını çıxarıb qızılı kontaktları ağ pozanla təmizləyin və yerinə bərk oturdun.</div>`,
+          keys: `<h3 style="margin-top:0;color:#38bdf8;">Sistem Qısayolları</h3>
+            <table class="win-table">
+              <tr><td><b>Ctrl + Shift + Esc</b></td><td>Task Manager-i açır</td></tr>
+              <tr><td><b>Ctrl + Alt + T</b></td><td>CMD / Terminal-ı açır</td></tr>
+              <tr><td><b>Başlığa 2 klik</b></td><td>Pəncərəni tam ekran edir</td></tr>
+              <tr><td><b>Sağ klik (İş masası)</b></td><td>Sürətli menyunu açır</td></tr>
+            </table>`
+        };
+        const showGh = k => { $('#gh-body').innerHTML = topics[k]; };
+        $$('.gh-cat').forEach(b => b.onclick = () => showGh(b.dataset.c));
+        showGh('start');
+      });
+
+      /* 5. MESAJLAR */
+      mkApp('messages', '💬', 'Mesajlar', 'CoreOS Mesajlar & Bildirişlər', 560, 440, `
+        <div style="display:flex;height:100%;gap:10px;">
+          <div style="width:170px;border-right:1px solid #2e3543;padding-right:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <div class="card msg-tab" data-u="qrup" style="cursor:pointer;padding:8px;border-color:#38bdf8;"><b>🎓 Qrup Kşats-25/01</b><div style="font-size:10.5px;color:#94a3b8;">Dərs qeydləri</div></div>
+            <div class="card msg-tab" data-u="muellim" style="cursor:pointer;padding:8px;"><b>👩‍🏫 Samirə Kərimova</b><div style="font-size:10.5px;color:#94a3b8;">Fənn müəllimi</div></div>
+            <div class="card msg-tab" data-u="ozum" style="cursor:pointer;padding:8px;"><b>📌 Şəxsi Qeydlər</b><div style="font-size:10.5px;color:#94a3b8;">Saved Messages</div></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <div id="msg-box" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px;"></div>
+            <form id="msg-form" style="display:flex;gap:6px;">
+              <input id="msg-inp" class="inp" style="flex:1;" placeholder="Mesaj yazın...">
+              <button class="btn-primary" type="submit">Göndər</button>
+            </form>
+          </div>
+        </div>
+      `, () => {
+        let curChat = 'qrup';
+        const chats = JSON.parse(localStorage.getItem('coreos_msgs') || 'null') || {
+          qrup: [
+            { from: 'Sistem', text: 'Qrup Kşats-25/01 söhbətinə xoş gəldiniz!', time: '09:00' },
+            { from: 'Salman', text: 'Slayddakı bütün 10 mövzunu CoreOS sisteminə əlavə etdim.', time: '14:20' }
+          ],
+          muellim: [
+            { from: 'Samirə Kərimova', text: 'Salam Salman, diaqnostika layihəsi əla alınıb. Test bölməsini də yoxlayın.', time: '11:15' }
+          ],
+          ozum: [
+            { from: 'Salman', text: 'Ev tapşırığı: T568B rəng ardıcıllığını və ATX gərginliklərini təkrarlamaq.', time: '18:00' }
+          ]
+        };
+        function drawChat() {
+          $('#msg-box').innerHTML = (chats[curChat] || []).map(m => `
+            <div class="card" style="padding:8px 10px;background:${m.from === 'Salman' ? '#0067c0' : '#202530'};align-self:${m.from === 'Salman' ? 'flex-end' : 'flex-start'};max-width:85%;">
+              <div style="font-size:10.5px;opacity:.8;margin-bottom:2px;"><b>${m.from}</b> · ${m.time}</div>
+              <div>${m.text}</div>
+            </div>
+          `).join('');
+          $('#msg-box').scrollTop = $('#msg-box').scrollHeight;
+        }
+        $$('.msg-tab').forEach(t => t.onclick = () => {
+          curChat = t.dataset.u;
+          $$('.msg-tab').forEach(x => x.style.borderColor = x === t ? '#38bdf8' : '#2e3543');
+          drawChat();
+        });
+        $('#msg-form').onsubmit = e => {
+          e.preventDefault();
+          const v = $('#msg-inp').value.trim();
+          if (!v) return;
+          const now = new Date().toTimeString().slice(0, 5);
+          chats[curChat].push({ from: 'Salman', text: v, time: now });
+          try { localStorage.setItem('coreos_msgs', JSON.stringify(chats)); } catch (x) {}
+          $('#msg-inp').value = '';
+          drawChat();
+        };
+        drawChat();
+      });
+
+      /* 6. POWERSHELL PRO */
+      mkApp('powershell', '🔷', 'PowerShell', 'Windows PowerShell 7 (Administrator)', 680, 440, `
+        <div onclick="$('#ps-in').focus()" style="height:100%;background:#012456;color:#eeedf0;font-family:Consolas,monospace;font-size:12.5px;padding:12px;border-radius:6px;overflow-y:auto;">
+          <div id="ps-out">
+            <div>Windows PowerShell 7.4 · CoreOS Edition</div>
+            <div style="color:#7dd3fc;margin-bottom:8px;">Əmrlər siyahısı üçün <b>Get-Help</b> və ya <b>help</b> yazın.</div>
+          </div>
+          <form id="ps-form" style="display:flex;gap:6px;margin-top:6px;">
+            <span style="color:#fde047;">PS C:\\Users\\Salman&gt;</span>
+            <input id="ps-in" type="text" autocomplete="off" style="flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:Consolas,monospace;font-size:12.5px;" placeholder="Get-NetIPConfiguration, Get-Process, Get-Service, Test-Connection, Get-ComputerInfo...">
+          </form>
+        </div>
+      `, () => {
+        $('#ps-form').onsubmit = e => {
+          e.preventDefault();
+          const raw = $('#ps-in').value.trim();
+          if (!raw) return;
+          const out = $('#ps-out');
+          out.innerHTML += `<div><span style="color:#fde047;">PS C:\\Users\\Salman&gt;</span> ${raw}</div>`;
+          const c = raw.toLowerCase();
+          if (c === 'cls' || c === 'clear') out.innerHTML = '';
+          else if (c.includes('help')) {
+            out.innerHTML += `<div style="color:#7dd3fc;">PowerShell Əmrləri: Get-NetIPConfiguration, Get-Process, Get-Service, Test-Connection, Get-ComputerInfo, Get-Disk, Get-Date, matrix, clear</div>`;
+          } else if (c.startsWith('get-netip')) {
+            out.innerHTML += `<pre style="color:#86efac;">InterfaceAlias : Ethernet0\nIPv4Address    : 192.168.1.105\nIPv4DefaultGateway : 192.168.1.1\nDNSServer      : 8.8.8.8, 1.1.1.1</pre>`;
+          } else if (c.startsWith('get-process')) {
+            out.innerHTML += `<pre>Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id ProcessName\n-------  ------    -----      -----     ------     -- -----------\n    642      34    85120      98400      12.45   1420 explorer\n    410      22    42100      51200       3.12   2048 CoreOS_AI\n    290      18    18400      24100       0.85   3104 pwsh</pre>`;
+          } else if (c.startsWith('get-service')) {
+            out.innerHTML += `<pre>Status   Name               DisplayName\n------   ----               -----------\nRunning  Audiosrv           Windows Audio\nRunning  Dhcp               DHCP Client\nRunning  Dnscache           DNS Client\nRunning  WinDefend          Microsoft Defender Antivirus</pre>`;
+          } else if (c.startsWith('test-connection')) {
+            const host = raw.split(/\s+/)[1] || '8.8.8.8';
+            out.innerHTML += `<pre style="color:#86efac;">Source        Destination     IPV4Address      Bytes    Time(ms)\n------        -----------     -----------      -----    --------\nASUS-S16      ${host.padEnd(15)} 8.8.8.8          32       11\nASUS-S16      ${host.padEnd(15)} 8.8.8.8          32       10</pre>`;
+          } else if (c.startsWith('get-computerinfo') || c === 'systeminfo') {
+            out.innerHTML += `<pre style="color:#38bdf8;">CsName            : ASUS-VIVOBOOK-S16\nOsName            : Microsoft Windows 11 Pro (CoreOS Build)\nCsProcessors      : Intel(R) Core(TM) 5 210H\nCsTotalPhysicalMemory : 16 GB DDR5\nUser              : Salman Bağırzadə (Kşats-25/01)</pre>`;
+          } else if (c.startsWith('get-disk')) {
+            out.innerHTML += `<pre>Number Friendly Name              OperationalStatus  Total Size\n------ -------------              -----------------  ----------\n0      NVMe Micron_2400_512GB     Online             512 GB\n1      SATA Seagate_1TB           Online             1000 GB</pre>`;
+          } else if (c.startsWith('get-date')) {
+            out.innerHTML += `<div>${new Date().toString()}</div>`;
+          } else if (c === 'matrix') {
+            out.innerHTML += `<div style="color:#22c55e;">01001100 01100001 01100010 00100000 01001111 01001011 — Sistem təhlükəsizdir!</div>`;
+          } else {
+            out.innerHTML += `<div style="color:#fca5a5;">'${raw}' tanınmadı. 'Get-Help' yazın.</div>`;
+          }
+          $('#ps-in').value = '';
+        };
+      });
+
+      /* 7. KAMERA VƏ QALEREYA */
+      window.coreosGallery = JSON.parse(localStorage.getItem('coreos_photos') || '[]');
+      function savePhotos() {
+        try { localStorage.setItem('coreos_photos', JSON.stringify(window.coreosGallery.slice(0, 20))); } catch (e) {}
+      }
+
+      mkApp('camera', '📷', 'Kamera', 'CoreOS Kamera', 560, 480, `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;">
+          <div style="position:relative;width:100%;flex:1;background:#000;border-radius:8px;overflow:hidden;display:grid;place-items:center;">
+            <video id="cam-vid" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+            <div id="cam-msg" style="position:absolute;color:#94a3b8;font-size:12px;text-align:center;padding:12px;">Kameranı işə salmaq üçün "Kameranı Aç" düyməsinə klikləyin.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <button class="btn-ghost" id="cam-start">🎥 Kameranı Aç</button>
+            <select id="cam-filter" class="inp">
+              <option value="none">Normal</option>
+              <option value="grayscale(100%)">Ağ-Qara</option>
+              <option value="sepia(80%)">Retro</option>
+              <option value="contrast(140%) hue-rotate(90deg)">Gecə Görüşü</option>
+            </select>
+            <button class="btn-primary" id="cam-snap">📸 Şəkil Çək</button>
+            <button class="btn-ghost" onclick="openWin('gallery')">🖼️ Qalereya</button>
+          </div>
+        </div>
+      `, () => {
+        let stream = null;
+        const vid = $('#cam-vid'), flt = $('#cam-filter');
+        flt.onchange = () => { vid.style.filter = flt.value; };
+        $('#cam-start').onclick = async () => {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            vid.srcObject = stream;
+            $('#cam-msg').style.display = 'none';
+          } catch (err) {
+            $('#cam-msg').textContent = 'Kamera tapılmadı və ya icazə verilmədi. Yenə də "Şəkil Çək" ilə test şəkli yarada bilərsiniz!';
+          }
+        };
+        $('#cam-snap').onclick = () => {
+          const cv = document.createElement('canvas');
+          cv.width = 640; cv.height = 420;
+          const ctx = cv.getContext('2d');
+          ctx.filter = flt.value;
+          if (stream && vid.videoWidth) {
+            ctx.drawImage(vid, 0, 0, cv.width, cv.height);
+          } else {
+            const g = ctx.createLinearGradient(0, 0, 640, 420);
+            g.addColorStop(0, '#1d4ed8'); g.addColorStop(1, '#0f766e');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, 640, 420);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 26px Segoe UI';
+            ctx.fillText('CoreOS Camera Snapshot', 160, 200);
+            ctx.font = '16px Consolas';
+            ctx.fillText(new Date().toLocaleString(), 210, 235);
+          }
+          const dataUrl = cv.toDataURL('image/jpeg', 0.8);
+          window.coreosGallery.unshift({ src: dataUrl, date: new Date().toLocaleString() });
+          savePhotos();
+          if (window.renderGallery) window.renderGallery();
+          notify('📸 Şəkil çəkildi!', 'Qalereya proqramında yadda saxlanıldı.');
+        };
+      });
+
+      mkApp('gallery', '🖼️', 'Qalereya', 'CoreOS Qalereya', 640, 480, `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <b style="color:#93c5fd;">Çəkilmiş və Yüklənmiş Şəkillər</b>
+          <div style="display:flex;gap:6px;">
+            <label class="btn-ghost" style="cursor:pointer;">+ Şəkil Yüklə <input id="gal-up" type="file" accept="image/*" style="display:none;"></label>
+            <button class="btn-primary" onclick="openWin('camera')">📷 Kamera</button>
+          </div>
+        </div>
+        <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+      `, () => {
+        window.renderGallery = function () {
+          const grid = $('#gal-grid');
+          if (!window.coreosGallery.length) {
+            grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;color:#94a3b8;">Hələ şəkil yoxdur. Kameradan şəkil çəkin və ya kompüterdən yükləyin.</div>`;
+            return;
+          }
+          grid.innerHTML = window.coreosGallery.map((p, i) => `
+            <div class="card" style="padding:6px;">
+              <img src="${p.src}" style="width:100%;height:110px;object-fit:cover;border-radius:4px;">
+              <div style="font-size:10px;color:#94a3b8;margin:4px 0;">${p.date}</div>
+              <div style="display:flex;gap:4px;">
+                <button class="btn-ghost" style="flex:1;padding:3px;font-size:11px;" onclick="setBg('url(${p.src}) center/cover');notify('🖼️ Fon dəyişdi','Şəkil divar kağızı edildi.')">Fon et</button>
+                <button class="btn-ghost" style="padding:3px 7px;font-size:11px;color:#f87171;" onclick="window.coreosGallery.splice(${i},1);localStorage.setItem('coreos_photos',JSON.stringify(window.coreosGallery));renderGallery();">✕</button>
+              </div>
+            </div>
+          `).join('');
+        };
+        $('#gal-up').onchange = e => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = () => {
+            window.coreosGallery.unshift({ src: r.result, date: f.name });
+            savePhotos();
+            renderGallery();
+          };
+          r.readAsDataURL(f);
+        };
+        renderGallery();
+      });
+
+      /* 8. BONUS: MUSİQİ PLEYERİ, KİBER ALƏT, CANLI MONİTOR, POMODORO, SƏS YAZICI */
+      mkApp('music', '🎵', 'Musiqi', 'CoreOS Sintezator & Musiqi', 380, 300, `
+        <div class="card" style="text-align:center;margin-bottom:10px;">
+          <div style="font-size:32px;">🎧</div>
+          <div id="mu-stat" style="font-weight:600;margin:6px 0;">CoreOS Ambient Melodiya</div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+            <button class="btn-primary" id="mu-play">▶ Oxut</button>
+            <button class="btn-ghost" id="mu-stop">⏹ Dayandır</button>
+          </div>
+        </div>
+        <div class="card" style="font-size:11.5px;color:#94a3b8;text-align:center;">Daxili WebAudio mühərriki ilə internet olmadan fon musiqisi yaradır.</div>
+      `, () => {
+        let ctx = null, iv = null;
+        const notes = [261.63, 329.63, 392.00, 493.88, 523.25, 392.00, 329.63, 293.66];
+        let step = 0;
+        $('#mu-play').onclick = () => {
+          if (iv) return;
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          iv = setInterval(() => {
+            const osc = ctx.createOscillator(), gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = notes[step++ % notes.length];
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.55);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(); osc.stop(ctx.currentTime + 0.56);
+          }, 500);
+          $('#mu-stat').textContent = '🎶 Oxunur...';
+        };
+        $('#mu-stop').onclick = () => { clearInterval(iv); iv = null; if (ctx) ctx.close(); $('#mu-stat').textContent = 'Dayandırıldı'; };
+      });
+
+      mkApp('security', '🔐', 'Kiber Alət', 'Şifrə Yaradıcı & SHA-256 Hash', 440, 340, `
+        <div class="card" style="margin-bottom:10px;">
+          <b>Güclü Şifrə Generatoru</b>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input id="sec-pw" class="inp" readonly style="flex:1;font-family:Consolas;">
+            <button class="btn-primary" id="sec-gen">Yarat</button>
+          </div>
+        </div>
+        <div class="card">
+          <b>SHA-256 Hash Hesablayıcı (Şifrələmə)</b>
+          <input id="sec-in" class="inp" style="width:100%;margin:8px 0;" placeholder="Mətn yazın...">
+          <div id="sec-hash" style="font-family:Consolas;font-size:11px;word-break:break-all;color:#4ade80;"></div>
+        </div>
+      `, () => {
+        const gen = () => {
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
+          let p = '';
+          for (let i = 0; i < 16; i++) p += chars[Math.floor(Math.random() * chars.length)];
+          $('#sec-pw').value = p;
+        };
+        $('#sec-gen').onclick = gen; gen();
+        $('#sec-in').oninput = async e => {
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(e.target.value));
+          $('#sec-hash').textContent = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+      });
+
+      /* 9. CANLI SİSTEM MONİTORU (QRAFİK) */
+      mkApp('sysmon', '📈', 'Monitor', 'Canlı Sistem Monitoru', 500, 380, `
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <b style="color:#38bdf8;">CPU & RAM Canlı Qrafiki</b>
+          <span id="sm-val" style="font-family:Consolas;color:#4ade80;">CPU: 14% · RAM: 38%</span>
+        </div>
+        <canvas id="sm-cv" width="460" height="220" style="width:100%;background:#0f131a;border:1px solid #2e3543;border-radius:6px;"></canvas>
+        <div class="card" style="margin-top:8px;font-size:11.5px;color:#94a3b8;">
+          Prosessor: Intel Core 5 210H · Yaddaş: 16 GB DDR5 · Disk: NVMe SSD (38°C)
+        </div>
+      `, () => {
+        const cv = $('#sm-cv'), ctx = cv.getContext('2d');
+        const cpuArr = Array(45).fill(15), ramArr = Array(45).fill(38);
+        setInterval(() => {
+          const cVal = Math.max(5, Math.min(95, cpuArr[cpuArr.length - 1] + (Math.random() * 14 - 7)));
+          const rVal = Math.max(30, Math.min(85, ramArr[ramArr.length - 1] + (Math.random() * 4 - 2)));
+          cpuArr.push(cVal); cpuArr.shift();
+          ramArr.push(rVal); ramArr.shift();
+          $('#sm-val').textContent = `CPU: ${Math.round(cVal)}% · RAM: ${Math.round(rVal)}%`;
+
+          ctx.fillStyle = '#0f131a'; ctx.fillRect(0, 0, cv.width, cv.height);
+          ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+          for (let y = 44; y < 220; y += 44) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(460, y); ctx.stroke(); }
+
+          const drawLine = (arr, color) => {
+            ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+            arr.forEach((v, i) => {
+              const x = i * (460 / (arr.length - 1));
+              const y = 210 - (v / 100) * 195;
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+          };
+          drawLine(ramArr, '#a855f7');
+          drawLine(cpuArr, '#38bdf8');
+        }, 900);
+      });
+
+      /* 10. POMODORO DƏRS TAYMERİ */
+      mkApp('pomodoro', '⏱️', 'Pomodoro', 'Dərs & Fokus Taymeri', 340, 320, `
+        <div class="card" style="text-align:center;">
+          <div id="pm-mode" class="badge">Fokus Vaxtı (25 dəq)</div>
+          <div id="pm-disp" style="font-size:44px;font-weight:700;font-family:Consolas;margin:14px 0;color:#38bdf8;">25:00</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn-primary" id="pm-start">▶ Başla</button>
+            <button class="btn-ghost" id="pm-reset">↺ Sıfırla</button>
+            <button class="btn-ghost" id="pm-brk">☕ Fasilə (5 dəq)</button>
+          </div>
+        </div>
+      `, () => {
+        let sec = 25 * 60, iv = null;
+        const upd = () => {
+          const m = String(Math.floor(sec / 60)).padStart(2, '0');
+          const s = String(sec % 60).padStart(2, '0');
+          $('#pm-disp').textContent = `${m}:${s}`;
+        };
+        $('#pm-start').onclick = () => {
+          if (iv) { clearInterval(iv); iv = null; $('#pm-start').textContent = '▶ Davam'; return; }
+          $('#pm-start').textContent = '⏸ Pauza';
+          iv = setInterval(() => {
+            if (sec > 0) { sec--; upd(); }
+            else { clearInterval(iv); iv = null; notify('⏱️ Vaxt bitdi!', 'Pomodoro sessiyası tamamlandı.'); }
+          }, 1000);
+        };
+        $('#pm-reset').onclick = () => { clearInterval(iv); iv = null; sec = 25 * 60; $('#pm-mode').textContent = 'Fokus Vaxtı (25 dəq)'; $('#pm-start').textContent = '▶ Başla'; upd(); };
+        $('#pm-brk').onclick = () => { clearInterval(iv); iv = null; sec = 5 * 60; $('#pm-mode').textContent = 'Fasilə (5 dəq)'; $('#pm-start').textContent = '▶ Başla'; upd(); };
+      });
+
+      /* 11. SƏS YAZICI (VOICE RECORDER) */
+      mkApp('recorder', '🎙️', 'Səs Yazıcı', 'CoreOS Səs Yazıcı', 380, 320, `
+        <div class="card" style="text-align:center;margin-bottom:10px;">
+          <div id="rc-stat" style="font-weight:600;margin-bottom:8px;">Mikrofon hazırdır</div>
+          <button class="btn-primary" id="rc-btn">🔴 Yazmağa Başla</button>
+        </div>
+        <div id="rc-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+      `, () => {
+        let rec = null, chunks = [];
+        $('#rc-btn').onclick = async () => {
+          if (rec && rec.state === 'recording') {
+            rec.stop();
+            $('#rc-btn').textContent = '🔴 Yazmağa Başla';
+            $('#rc-stat').textContent = 'Səs yadda saxlanıldı';
+            return;
+          }
+          try {
+            const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+            rec = new MediaRecorder(st);
+            chunks = [];
+            rec.ondataavailable = e => chunks.push(e.data);
+            rec.onstop = () => {
+              const url = URL.createObjectURL(new Blob(chunks, { type: 'audio/webm' }));
+              const d = document.createElement('div'); d.className = 'card';
+              d.innerHTML = `<div style="font-size:11px;margin-bottom:4px;">🎙️ Səs qeydi (${new Date().toTimeString().slice(0,5)})</div><audio controls src="${url}" style="width:100%;height:30px;"></audio>`;
+              $('#rc-list').prepend(d);
+            };
+            rec.start();
+            $('#rc-btn').textContent = '⏹ Dayandır';
+            $('#rc-stat').textContent = '🔴 Səs yazılır...';
+          } catch (e) {
+            $('#rc-stat').textContent = 'Mikrofon tapılmadı və ya icazə verilmədi.';
+          }
+        };
+      });
     })();
   </script>
 
