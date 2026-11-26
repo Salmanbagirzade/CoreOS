@@ -3162,5 +3162,443 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       }
     );
   })();
+</script><script>
+  /* ===== Windows 11 Birebir Settings (Bütün Bölmələr + Axtarış + Switch-lər) ===== */
+  (function () {
+    const win = document.getElementById('win-settings');
+    if (!win) return;
+
+    const W11_KEY = 'coreos_win11_settings_v1';
+    let s = {
+      q: '',
+      tab: 'System',
+      nightLight: false,
+      hdr: false,
+      snap: true,
+      storageSense: true,
+      bluetooth: true,
+      nearbyShare: true,
+      airplane: false,
+      wifi: true,
+      vpn: false,
+      transparency: true,
+      showTaskbarSearch: true,
+      showWidgets: true,
+      doNotDisturb: false,
+      focusTimer: 25,
+      autoTime: true,
+      timeZone: '(UTC+04:00) Baku',
+      gameMode: true,
+      xboxBar: false,
+      narrator: false,
+      magnifier: false,
+      highContrast: false,
+      captions: false,
+      location: true,
+      cameraPriv: true,
+      micPriv: true,
+      smartScreen: true,
+      autoUpdate: true,
+      lastCheck: 'Bu gün, 10:28'
+    };
+
+    try {
+      Object.assign(s, JSON.parse(localStorage.getItem(W11_KEY) || '{}'));
+    } catch (e) {}
+
+    const save = () => {
+      try { localStorage.setItem(W11_KEY, JSON.stringify(s)); } catch (e) {}
+    };
+
+    const st = document.createElement('style');
+    st.textContent = `
+      #win-settings {
+        width: min(920px, 96vw) !important;
+        height: min(620px, calc(100dvh - 60px)) !important;
+        background: #1c2029 !important;
+      }
+      .w11s-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+      .w11s-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #181c24;
+        border-bottom: 1px solid #2b3242;
+        flex-wrap: wrap;
+      }
+      .w11s-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .w11s-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #38bdf8, #2563eb);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        color: #fff;
+        font-size: 13px;
+      }
+      .w11s-search {
+        flex: 1;
+        max-width: 300px;
+        background: #242936;
+        border: 1px solid #363f52;
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: #fff;
+        font-size: 12px;
+        outline: none;
+      }
+      .w11s-search:focus { border-color: #38bdf8; }
+      .w11s-body {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+      .w11s-nav {
+        width: 225px;
+        flex-shrink: 0;
+        background: #181c24;
+        border-right: 1px solid #2b3242;
+        padding: 8px 6px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .w11s-nav-item {
+        border: none;
+        background: transparent;
+        color: #cbd5e1;
+        padding: 8px 10px;
+        border-radius: 6px;
+        text-align: left;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        position: relative;
+      }
+      .w11s-nav-item:hover { background: rgba(255,255,255,0.06); }
+      .w11s-nav-item.active {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        font-weight: 600;
+      }
+      .w11s-nav-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        bottom: 7px;
+        width: 3px;
+        border-radius: 3px;
+        background: #60a5fa;
+      }
+      .w11s-main {
+        flex: 1;
+        padding: 16px 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .w11s-h1 {
+        font-size: 19px;
+        font-weight: 600;
+        margin: 0 0 6px 0;
+        color: #f8fafc;
+      }
+      .w11s-row {
+        background: #232834;
+        border: 1px solid #2f3748;
+        border-radius: 7px;
+        padding: 11px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .w11s-row-title { font-size: 13px; font-weight: 500; color: #f1f5f9; }
+      .w11s-row-sub { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+      .w11s-sw {
+        width: 40px;
+        height: 20px;
+        border-radius: 999px;
+        background: #3b4456;
+        position: relative;
+        cursor: pointer;
+        border: none;
+        flex-shrink: 0;
+        transition: background 0.15s;
+      }
+      .w11s-sw.on { background: #60a5fa; }
+      .w11s-sw::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.15s;
+      }
+      .w11s-sw.on::after {
+        transform: translateX(20px);
+        background: #0f172a;
+      }
+      @media (max-width: 680px) {
+        .w11s-nav { width: 56px; padding: 8px 4px; }
+        .w11s-nav-item span.w11s-lbl { display: none; }
+        .w11s-nav-item { justify-content: center; padding: 10px 4px; }
+      }
+    `;
+    document.head.appendChild(st);
+
+    const SECTIONS = [
+      { id: 'System', icon: '💻', label: 'System' },
+      { id: 'Bluetooth', icon: '🔵', label: 'Bluetooth & devices' },
+      { id: 'Network', icon: '🌐', label: 'Network & internet' },
+      { id: 'Personalization', icon: '🎨', label: 'Personalization' },
+      { id: 'Apps', icon: '📦', label: 'Apps' },
+      { id: 'Accounts', icon: '👤', label: 'Accounts' },
+      { id: 'Time', icon: '🕒', label: 'Time & language' },
+      { id: 'Gaming', icon: '🎮', label: 'Gaming' },
+      { id: 'Accessibility', icon: '♿', label: 'Accessibility' },
+      { id: 'Privacy', icon: '🛡️', label: 'Privacy & security' },
+      { id: 'Update', icon: '🔄', label: 'Windows Update' }
+    ];
+
+    // Mövcud #win-settings içini birebir Windows 11 düzülüşünə gətiririk
+    const oldBody = win.querySelector('div[style*="flex:1"]');
+    if (!oldBody) return;
+    oldBody.style.cssText = 'flex:1;display:flex;overflow:hidden;padding:0;';
+    oldBody.innerHTML = `
+      <div class="w11s-shell">
+        <div class="w11s-top">
+          <div class="w11s-user">
+            <div class="w11s-avatar">SB</div>
+            <div>
+              <div style="font-size:12.5px;font-weight:600;">Salman Bağırzadə</div>
+              <div style="font-size:11px;color:#94a3b8;">Kşats-25/01 · CoreOS Account</div>
+            </div>
+          </div>
+          <input id="w11s-q" class="w11s-search" type="text" placeholder="Find a setting (axtar)..." value="${s.q}">
+        </div>
+        <div class="w11s-body">
+          <div class="w11s-nav" id="w11s-nav"></div>
+          <div class="w11s-main" id="w11s-main"></div>
+        </div>
+      </div>
+    `;
+
+    const navEl = document.getElementById('w11s-nav');
+    const mainEl = document.getElementById('w11s-main');
+    const qEl = document.getElementById('w11s-q');
+
+    const swHtml = (key) => `<button class="w11s-sw ${s[key] ? 'on' : ''}" data-sw="${key}" type="button"></button>`;
+    const rowHtml = (icon, title, sub, rightHtml, searchText = '') => `
+      <div class="w11s-row" data-st="${(title + ' ' + sub + ' ' + searchText).toLowerCase()}">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">${icon}</span>
+          <div>
+            <div class="w11s-row-title">${title}</div>
+            <div class="w11s-row-sub">${sub}</div>
+          </div>
+        </div>
+        <div>${rightHtml}</div>
+      </div>
+    `;
+
+    function applySideEffects() {
+      const nlOverlay = [...document.querySelectorAll('div')].find(d => d.style.mixBlendMode === 'multiply');
+      if (nlOverlay) nlOverlay.style.display = s.nightLight ? 'block' : 'none';
+      const tbSearch = document.getElementById('tb-search-inp');
+      if (tbSearch && tbSearch.parentElement) tbSearch.parentElement.style.display = s.showTaskbarSearch ? 'flex' : 'none';
+      const wgBtn = document.querySelector('.tb-left .tb-btn');
+      if (wgBtn) wgBtn.style.display = s.showWidgets ? 'flex' : 'none';
+    }
+
+    function renderContent() {
+      navEl.querySelectorAll('.w11s-nav-item').forEach(b => {
+        b.classList.toggle('active', b.dataset.id === s.tab);
+      });
+
+      const pages = {
+        System: `
+          <h2 class="w11s-h1">System</h2>
+          ${rowHtml('🖥️', 'Display', 'ASUS Vivobook S 16 OLED · 1920×1200 · Scale 125%', `<button class="btn-ghost" onclick="openWin('mycoreos')">Open</button>`)}
+          ${rowHtml('🌙', 'Night light', 'Warm colors to block blue light at night', swHtml('nightLight'))}
+          ${rowHtml('✨', 'HDR', 'High dynamic range display profile', swHtml('hdr'))}
+          ${rowHtml('🪟', 'Snap windows', 'Arrange windows automatically when dragging', swHtml('snap'))}
+          ${rowHtml('🔊', 'Sound', 'Output: Realtek Audio · Volume levels', `<button class="btn-ghost" onclick="openWin('devmgmt')">Devices</button>`)}
+          ${rowHtml('🔕', 'Notifications', 'Do not disturb & app notification alerts', swHtml('doNotDisturb'))}
+          ${rowHtml('⏱️', 'Focus', 'Pomodoro study & work session timer', `<button class="btn-ghost" onclick="openWin('pomodoro')">Launch</button>`)}
+          ${rowHtml('🔋', 'Power & battery', 'Balanced mode · Battery saver & charge limit', `<button class="btn-ghost" onclick="openWin('mycoreos')">Battery</button>`)}
+          ${rowHtml('💾', 'Storage', 'C: NVMe SSD (296 GB free of 512 GB) · Storage Sense', swHtml('storageSense'))}
+          ${rowHtml('📊', 'Task Manager', 'Processes, performance graphs & startup apps', `<button class="btn-ghost" onclick="openWin('taskmgr')">Open</button>`)}
+          ${rowHtml('ℹ️', 'About', 'CoreOS Desktop · Intel Core 5 210H · 16 GB DDR5', `<button class="btn-ghost" onclick="openWin('cmd')">System Info</button>`)}
+        `,
+        Bluetooth: `
+          <h2 class="w11s-h1">Bluetooth &amp; devices</h2>
+          ${rowHtml('🔵', 'Bluetooth', 'Discoverable as "COREOS-VIVOBOOK"', swHtml('bluetooth'))}
+          ${rowHtml('📡', 'Nearby sharing', 'Share files with nearby devices', swHtml('nearbyShare'))}
+          ${rowHtml('🖱️', 'Mouse', 'iMICE GWX7 Wireless · Pointer speed & scrolling', `<span class="badge">Connected</span>`)}
+          ${rowHtml('📷', 'Cameras', 'Integrated camera & snapshot studio', `<button class="btn-ghost" onclick="openWin('camera')">Camera</button>`)}
+          ${rowHtml('🔌', 'Device Manager', 'Hardware drivers, COM/LPT ports & IRQ status', `<button class="btn-ghost" onclick="openWin('devmgmt')">Open</button>`)}
+        `,
+        Network: `
+          <h2 class="w11s-h1">Network &amp; internet</h2>
+          ${rowHtml('📶', 'Wi-Fi', 'Connected · Secured (WPA3)', swHtml('wifi'))}
+          ${rowHtml('✈️', 'Airplane mode', 'Stop all wireless communication', swHtml('airplane'))}
+          ${rowHtml('🛡️', 'VPN', 'Add or connect virtual private network', swHtml('vpn'))}
+          ${rowHtml('🌐', 'IP / Subnet Calculator', 'CIDR masks, host ranges & network diagnostics', `<button class="btn-ghost" onclick="openWin('subnet')">Calculate</button>`)}
+          ${rowHtml('⬛', 'Network CLI Tools', 'ipconfig, arp -a, ping, tracert, nslookup', `<button class="btn-ghost" onclick="openWin('cmd')">Open CMD</button>`)}
+        `,
+        Personalization: `
+          <h2 class="w11s-h1">Personalization</h2>
+          ${rowHtml('🖼️', 'Background', 'Wallpaper, solid colors, or custom image', `<button class="btn-ghost" onclick="openWin('gallery')">Gallery</button>`)}
+          ${rowHtml('🎨', 'Colors', 'Accent color, dark mode & transparency effects', swHtml('transparency'))}
+          ${rowHtml('📌', 'Start', 'Customize pinned apps, layout & icon sizes', `<button class="btn-ghost" onclick="toggleStart(true);closeWin('settings')">Open Start</button>`)}
+          ${rowHtml('➖', 'Taskbar', 'Search box, widgets & open window buttons', swHtml('showTaskbarSearch'))}
+          ${rowHtml('🧩', 'Widgets', 'Show weather, system health & mastery widgets', swHtml('showWidgets'))}
+        `,
+        Apps: `
+          <h2 class="w11s-h1">Apps</h2>
+          ${rowHtml('📱', 'Installed apps', 'CoreOS AI, Lessons, My CoreOS, Chrome, Paint, Snake', `<button class="btn-ghost" onclick="openWin('hub')">All Apps</button>`)}
+          ${rowHtml('🌍', 'Default apps', 'Web browser, text editor & media tools', `<button class="btn-ghost" onclick="openWin('chrome')">Chrome</button>`)}
+          ${rowHtml('⚙️', 'Optional features', 'Command Prompt & PowerShell 7 shells', `<button class="btn-ghost" onclick="openWin('powershell')">PowerShell</button>`)}
+          ${rowHtml('🚀', 'Startup apps', 'Manage apps that run automatically', `<button class="btn-ghost" onclick="openWin('taskmgr')">Task Manager</button>`)}
+        `,
+        Accounts: `
+          <h2 class="w11s-h1">Accounts</h2>
+          ${rowHtml('👤', 'Your info', 'Salman Bağırzadə · Group Kşats-25/01', `<span class="badge">Local Admin</span>`)}
+          ${rowHtml('🔑', 'Sign-in options', 'PIN lock screen & session security', `<button class="btn-ghost" onclick="lockPc()">Lock Now</button>`)}
+          ${rowHtml('📝', 'Saved notes & messages', 'Sticky notes & group messages', `<button class="btn-ghost" onclick="openWin('sticky')">Sticky Notes</button>`)}
+        `,
+        Time: `
+          <h2 class="w11s-h1">Time &amp; language</h2>
+          ${rowHtml('🕒', 'Date & time', 'Set time automatically · Time zone: ' + s.timeZone, swHtml('autoTime'))}
+          ${rowHtml('🌍', 'Time zone', 'Select regional time zone', `<select class="inp" id="w11s-tz"><option ${s.timeZone.includes('Baku')?'selected':''}>(UTC+04:00) Baku</option><option ${s.timeZone.includes('Istanbul')?'selected':''}>(UTC+03:00) Istanbul</option><option ${s.timeZone.includes('UTC')?'selected':''}>(UTC+00:00) UTC</option></select>`)}
+          ${rowHtml('📅', 'Calendar & stopwatch', 'Monthly calendar & precision stopwatch', `<button class="btn-ghost" onclick="openWin('calendar')">Open</button>`)}
+          ${rowHtml('🔤', 'Language & region', 'Azerbaijani (az-AZ) · QWERTY keyboard', `<span style="color:#94a3b8;font-size:12px;">AZ / EN</span>`)}
+        `,
+        Gaming: `
+          <h2 class="w11s-h1">Gaming</h2>
+          ${rowHtml('🎮', 'Game Mode', 'Optimize system performance while playing', swHtml('gameMode'))}
+          ${rowHtml('🕹️', 'Game bar / overlay', 'Quick gaming shortcuts & overlay', swHtml('xboxBar'))}
+          ${rowHtml('🐍', 'Snake Arcade', 'Built-in retro Snake game', `<button class="btn-primary" onclick="openWin('snake')">Play Snake</button>`)}
+        `,
+        Accessibility: `
+          <h2 class="w11s-h1">Accessibility</h2>
+          ${rowHtml('🔊', 'Narrator', 'Screen reader voice assistance', swHtml('narrator'))}
+          ${rowHtml('🔍', 'Magnifier', 'Zoom in on parts of the screen', swHtml('magnifier'))}
+          ${rowHtml('🌗', 'Contrast themes', 'High contrast visual mode', swHtml('highContrast'))}
+          ${rowHtml('💬', 'Captions', 'On-screen text captions', swHtml('captions'))}
+        `,
+        Privacy: `
+          <h2 class="w11s-h1">Privacy &amp; security</h2>
+          ${rowHtml('🛡️', 'Windows Security', 'Virus & threat protection · SmartScreen', swHtml('smartScreen'))}
+          ${rowHtml('🔐', 'Password & SHA-256 Hash', 'Generate strong passwords & compute SHA-256', `<button class="btn-ghost" onclick="openWin('security')">Security Tool</button>`)}
+          ${rowHtml('📍', 'Location', 'Allow location access for maps & widgets', swHtml('location'))}
+          ${rowHtml('📷', 'Camera', 'Allow apps to access your camera', swHtml('cameraPriv'))}
+          ${rowHtml('🎙️', 'Microphone', 'Allow apps to access your microphone', swHtml('micPriv'))}
+        `,
+        Update: `
+          <h2 class="w11s-h1">Windows Update</h2>
+          <div class="w11s-row" style="border-color:#38bdf8;">
+            <div>
+              <div class="w11s-row-title" style="color:#38bdf8;">You're up to date</div>
+              <div class="w11s-row-sub">Last checked: <span id="w11s-chk-t">${s.lastCheck}</span></div>
+            </div>
+            <button class="btn-primary" id="w11s-chk-btn">Check for updates</button>
+          </div>
+          ${rowHtml('⬇️', 'Automatic updates', 'Download and install system updates automatically', swHtml('autoUpdate'))}
+          ${rowHtml('📋', 'Event Viewer logs', 'View System, Kernel-Power & BugCheck events', `<button class="btn-ghost" onclick="openWin('eventvwr')">Event Viewer</button>`)}
+          ${rowHtml('🗑️', 'Recycle Bin', 'Restore deleted files or empty bin', `<button class="btn-ghost" onclick="openWin('recyclebin')">Recycle Bin</button>`)}
+        `
+      };
+
+      mainEl.innerHTML = pages[s.tab] || pages.System;
+
+      // Switch-ləri bağlayırıq
+      mainEl.querySelectorAll('.w11s-sw').forEach(btn => {
+        btn.onclick = () => {
+          const k = btn.dataset.sw;
+          s[k] = !s[k];
+          btn.classList.toggle('on', s[k]);
+          save();
+          applySideEffects();
+          if (window.notify) notify('⚙️ Settings', `${k}: ${s[k] ? 'ON' : 'OFF'}`);
+        };
+      });
+
+      const tzEl = document.getElementById('w11s-tz');
+      if (tzEl) {
+        tzEl.onchange = () => {
+          s.timeZone = tzEl.value;
+          save();
+          if (window.notify) notify('🕒 Time Zone', s.timeZone);
+        };
+      }
+
+      const chkBtn = document.getElementById('w11s-chk-btn');
+      if (chkBtn) {
+        chkBtn.onclick = () => {
+          s.lastCheck = 'Yeniləndi: ' + new Date().toTimeString().slice(0, 5);
+          save();
+          const tEl = document.getElementById('w11s-chk-t');
+          if (tEl) tEl.textContent = s.lastCheck;
+          if (window.notify) notify('🔄 Windows Update', 'Sistem ən son versiyadadır.');
+        };
+      }
+
+      filterRows();
+    }
+
+    function filterRows() {
+      const q = s.q.trim().toLowerCase();
+      mainEl.querySelectorAll('.w11s-row[data-st]').forEach(r => {
+        r.style.display = (!q || r.dataset.st.includes(q)) ? 'flex' : 'none';
+      });
+    }
+
+    SECTIONS.forEach(sec => {
+      const b = document.createElement('button');
+      b.className = 'w11s-nav-item';
+      b.dataset.id = sec.id;
+      b.innerHTML = `<span>${sec.icon}</span><span class="w11s-lbl">${sec.label}</span>`;
+      b.onclick = () => {
+        s.q = '';
+        qEl.value = '';
+        s.tab = sec.id;
+        save();
+        renderContent();
+      };
+      navEl.appendChild(b);
+    });
+
+    qEl.oninput = () => {
+      s.q = qEl.value;
+      save();
+      filterRows();
+    };
+
+    applySideEffects();
+    renderContent();
+  })();
 </script>
 </html>
