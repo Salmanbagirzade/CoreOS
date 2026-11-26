@@ -2612,5 +2612,198 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       restoreOrder();
     }, 450);
   })();
+</script><script>
+  /* ===== CoreOS Settings Genişləndirmə (Yeni Bölmələr + Sürətli Parametrlər + Yadda Saxlama) ===== */
+  (function () {
+    const nav = document.getElementById('st-nav');
+    const pane = document.getElementById('st-pane');
+    if (!nav || !pane) return;
+
+    const EXT_KEY = 'coreos_settings_ext_v1';
+    let ext = {
+      batteryLimit: 80,
+      powerMode: 'balanced', // 'power_saver' | 'balanced' | 'performance'
+      dnsPreset: '8.8.8.8, 1.1.1.1',
+      autoSaveNotes: true,
+      compactMode: false
+    };
+
+    try {
+      Object.assign(ext, JSON.parse(localStorage.getItem(EXT_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveExt = () => {
+      try {
+        localStorage.setItem(EXT_KEY, JSON.stringify(ext));
+      } catch (e) {}
+    };
+
+    // Genişləndirilmiş pəncərə ölçüsü və kompakt rejim stili
+    const st = document.createElement('style');
+    st.textContent = `
+      #win-settings {
+        width: min(820px, 95vw) !important;
+        height: min(580px, calc(100dvh - 64px)) !important;
+      }
+      #st-nav {
+        width: 195px !important;
+      }
+      body.coreos-compact .card {
+        padding: 10px !important;
+      }
+      body.coreos-compact .win-table th,
+      body.coreos-compact .win-table td {
+        padding: 5px 7px !important;
+      }
+    `;
+    document.head.appendChild(st);
+
+    const applyExt = () => {
+      document.body.classList.toggle('coreos-compact', !!ext.compactMode);
+    };
+    applyExt();
+
+    const extraPages = {
+      '⚡ Enerji & Batareya': () => `
+        <div class="card">
+          <b style="color:#38bdf8;">Enerji Rejimi</b>
+          <p style="color:#94a3b8;margin:4px 0 10px;">Sistemin performans və enerji sərfiyyatı profilini seçin:</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-ghost st-pwr" data-p="power_saver">🍃 Enerji Qənaəti</button>
+            <button class="btn-ghost st-pwr" data-p="balanced">⚖️ Balanslaşdırılmış</button>
+            <button class="btn-ghost st-pwr" data-p="performance">🚀 Maksimum Performans</button>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b>Batareya Şarj Limiti</b>
+            <span id="st-bat-val" style="color:#4ade80;font-weight:700;">${ext.batteryLimit}%</span>
+          </div>
+          <p style="color:#94a3b8;margin:4px 0 8px;font-size:11.5px;">Batareyanın uzunömürlü qalması üçün maksimum şarj həddi:</p>
+          <input id="st-bat-rng" type="range" min="50" max="100" step="5" value="${ext.batteryLimit}" style="width:100%;">
+        </div>
+      `,
+      '🌐 Şəbəkə & DNS': () => `
+        <div class="card">
+          <b style="color:#38bdf8;">Aktiv Şəbəkə Vəziyyəti</b>
+          <div style="margin-top:6px;line-height:1.7;">
+            <div>Bağlantı statusu: <b style="color:${navigator.onLine ? '#4ade80' : '#f87171'};">${navigator.onLine ? 'Onlayn (Aktiv)' : 'Oflayn'}</b></div>
+            <div>Lokal IP (Simulyasiya): <b>192.168.1.105</b> · Gateway: <b>192.168.1.1</b></div>
+            <div>Cari DNS Serverlər: <b id="st-dns-cur">${ext.dnsPreset}</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <b>Sürətli DNS Profili Seç</b>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn-ghost st-dns" data-d="8.8.8.8, 1.1.1.1">Google + Cloudflare</button>
+            <button class="btn-ghost st-dns" data-d="1.1.1.1, 1.0.0.1">Cloudflare DNS</button>
+            <button class="btn-ghost st-dns" data-d="9.9.9.9, 149.112.112.112">Quad9 (Təhlükəsiz)</button>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-primary" onclick="openWin('cmd')">CMD-də ipconfig /flushdns aç</button>
+            <button class="btn-ghost" onclick="openWin('subnet')">Subnet Kalkulyator</button>
+          </div>
+        </div>
+      `,
+      '🧹 Yaddaş & Keş': () => {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('coreos_') || ['sticky', 'cfg', 'bg'].includes(k));
+        return `
+          <div class="card">
+            <b style="color:#38bdf8;">Brauzer Lokal Yaddaş (localStorage)</b>
+            <p style="color:#94a3b8;margin:4px 0 8px;">Saxlanılan açar sayı: <b>${keys.length}</b></p>
+            <div style="font-size:11.5px;color:#cbd5e1;background:#141820;padding:8px;border-radius:5px;max-height:110px;overflow-y:auto;">
+              ${keys.length ? keys.map(k => `• ${k}`).join('<br>') : 'Saxlanılan xüsusi məlumat yoxdur.'}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+              <button class="btn-ghost" id="st-clear-bin">🗑️ Zibil Qutusunu Təmizlə</button>
+              <button class="btn-ghost" id="st-clear-pos">📐 İkon Düzülüşünü Sıfırla</button>
+            </div>
+          </div>
+          <div class="card">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="st-compact" ${ext.compactMode ? 'checked' : ''}>
+              <span><b>Kompakt İnterfeys Rejimi</b> (kart və cədvəl boşluqlarını kiçilt)</span>
+            </label>
+          </div>
+        `;
+      }
+    };
+
+    const bindExtra = (key) => {
+      if (key === '⚡ Enerji & Batareya') {
+        const paintPwr = () => {
+          pane.querySelectorAll('.st-pwr').forEach(b => {
+            b.style.background = b.dataset.p === ext.powerMode ? '#0067c0' : '#282e3b';
+          });
+        };
+        paintPwr();
+        pane.querySelectorAll('.st-pwr').forEach(b => {
+          b.onclick = () => {
+            ext.powerMode = b.dataset.p;
+            saveExt();
+            paintPwr();
+            if (window.notify) notify('⚡ Enerji Rejimi', `Profil dəyişdirildi: ${b.textContent}`);
+          };
+        });
+        const rng = pane.querySelector('#st-bat-rng');
+        if (rng) {
+          rng.oninput = () => {
+            ext.batteryLimit = +rng.value;
+            pane.querySelector('#st-bat-val').textContent = ext.batteryLimit + '%';
+            saveExt();
+          };
+        }
+      } else if (key === '🌐 Şəbəkə & DNS') {
+        pane.querySelectorAll('.st-dns').forEach(b => {
+          b.onclick = () => {
+            ext.dnsPreset = b.dataset.d;
+            saveExt();
+            const cur = pane.querySelector('#st-dns-cur');
+            if (cur) cur.textContent = ext.dnsPreset;
+            if (window.notify) notify('🌐 DNS Yeniləndi', ext.dnsPreset);
+          };
+        });
+      } else if (key === '🧹 Yaddaş & Keş') {
+        const cb = pane.querySelector('#st-compact');
+        if (cb) {
+          cb.onchange = () => {
+            ext.compactMode = cb.checked;
+            saveExt();
+            applyExt();
+          };
+        }
+        const cBin = pane.querySelector('#st-clear-bin');
+        if (cBin) {
+          cBin.onclick = () => {
+            localStorage.removeItem('coreos_recycle_bin_v1');
+            if (typeof window.renderRecycleBin === 'function') window.renderRecycleBin();
+            if (window.notify) notify('🗑️ Təmizləndi', 'Zibil qutusu yaddaşı sıfırlandı.');
+          };
+        }
+        const cPos = pane.querySelector('#st-clear-pos');
+        if (cPos) {
+          cPos.onclick = () => {
+            localStorage.removeItem('coreos_icon_pos');
+            if (window.notify) notify('📐 Sıfırlandı', 'Səhifə yenilənəndə ikonlar standart düzülüşə qayıdacaq.');
+          };
+        }
+      }
+    };
+
+    Object.keys(extraPages).forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-ghost';
+      btn.style.textAlign = 'left';
+      btn.textContent = key;
+      btn.onclick = () => {
+        pane.innerHTML = extraPages[key]();
+        bindExtra(key);
+        nav.querySelectorAll('button').forEach(b => {
+          b.style.background = b.textContent === key ? '#0067c0' : '#282e3b';
+        });
+      };
+      nav.appendChild(btn);
+    });
+  })();
 </script>
 </html>
