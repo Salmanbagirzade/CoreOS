@@ -2384,5 +2384,233 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
 
     updateBinBadge();
   })();
+</script><script>
+  /* ===== CoreOS Start Menu Özəlləşdirici (Ölçü + İkon Yerdəyişmə + Yadda Saxlama) ===== */
+  (function () {
+    const startEl = document.getElementById('win-start');
+    if (!startEl) return;
+
+    const CFG_KEY = 'coreos_start_custom_v1';
+    let cfg = {
+      width: 480,
+      iconSize: 'medium', // 'small' | 'medium' | 'large'
+      order: []
+    };
+
+    try {
+      Object.assign(cfg, JSON.parse(localStorage.getItem(CFG_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveCfg = () => {
+      try {
+        localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+      } catch (e) {}
+    };
+
+    // Start menyu ikonlarının konteynerini tapırıq
+    const grid = startEl.querySelector('div[style*="grid-template-columns"]');
+    if (!grid) return;
+
+    // 1. Stil əlavə edirik
+    const st = document.createElement('style');
+    st.textContent = `
+      #win-start {
+        transition: width 0.15s ease;
+      }
+      #win-start .start-ctrl-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        flex-wrap: wrap;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #2e3543;
+        border-radius: 7px;
+        padding: 6px 8px;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+      #win-start .start-grid-custom {
+        display: grid !important;
+        gap: 8px !important;
+      }
+      #win-start .start-grid-custom.sz-small {
+        grid-template-columns: repeat(5, 1fr) !important;
+      }
+      #win-start .start-grid-custom.sz-small .win-icon {
+        height: 64px !important;
+        padding: 3px !important;
+      }
+      #win-start .start-grid-custom.sz-small .win-icon-glyph {
+        font-size: 20px !important;
+      }
+      #win-start .start-grid-custom.sz-small .win-icon-label {
+        font-size: 10px !important;
+      }
+
+      #win-start .start-grid-custom.sz-medium {
+        grid-template-columns: repeat(4, 1fr) !important;
+      }
+      #win-start .start-grid-custom.sz-medium .win-icon {
+        height: 78px !important;
+      }
+
+      #win-start .start-grid-custom.sz-large {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+      #win-start .start-grid-custom.sz-large .win-icon {
+        height: 96px !important;
+      }
+      #win-start .start-grid-custom.sz-large .win-icon-glyph {
+        font-size: 34px !important;
+      }
+      #win-start .start-grid-custom.sz-large .win-icon-label {
+        font-size: 12.5px !important;
+      }
+
+      #win-start .win-icon[draggable="true"] {
+        cursor: grab;
+      }
+      #win-start .win-icon.st-dragging {
+        opacity: 0.45;
+        border: 1px dashed #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.18) !important;
+      }
+      #win-start .win-icon.st-over {
+        border: 1px solid #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.25) !important;
+      }
+    `;
+    document.head.appendChild(st);
+    grid.classList.add('start-grid-custom');
+
+    // 2. Start menyunun yuxarısına idarəetmə paneli qoyuruq
+    const bar = document.createElement('div');
+    bar.className = 'start-ctrl-bar';
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="color:#94a3b8;">İkon:</span>
+        <button class="btn-ghost st-sz" data-s="small" style="padding:2px 7px;font-size:11px;">Kiçik</button>
+        <button class="btn-ghost st-sz" data-s="medium" style="padding:2px 7px;font-size:11px;">Orta</button>
+        <button class="btn-ghost st-sz" data-s="large" style="padding:2px 7px;font-size:11px;">Böyük</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="color:#94a3b8;">En:</span>
+        <input id="st-width-rng" type="range" min="360" max="680" step="10" value="${cfg.width}" style="width:75px;">
+        <button id="st-reset-btn" class="btn-ghost" title="Sıfırla" style="padding:2px 6px;font-size:11px;">↺</button>
+      </div>
+    `;
+    startEl.insertBefore(bar, grid);
+
+    function applyStartStyle() {
+      startEl.style.width = cfg.width + 'px';
+      grid.classList.remove('sz-small', 'sz-medium', 'sz-large');
+      grid.classList.add('sz-' + cfg.iconSize);
+      bar.querySelectorAll('.st-sz').forEach(b => {
+        b.style.background = b.dataset.s === cfg.iconSize ? '#0067c0' : '#282e3b';
+      });
+    }
+
+    bar.querySelectorAll('.st-sz').forEach(b => {
+      b.onclick = () => {
+        cfg.iconSize = b.dataset.s;
+        saveCfg();
+        applyStartStyle();
+      };
+    });
+
+    const wRng = document.getElementById('st-width-rng');
+    wRng.oninput = () => {
+      cfg.width = +wRng.value;
+      saveCfg();
+      applyStartStyle();
+    };
+
+    document.getElementById('st-reset-btn').onclick = () => {
+      cfg = { width: 480, iconSize: 'medium', order: [] };
+      wRng.value = 480;
+      saveCfg();
+      applyStartStyle();
+      if (window.notify) notify('↺ Sıfırlandı', 'Start menyu ölçüləri standart hala qaytarıldı.');
+    };
+
+    // 3. İkonların yerini dəyişmək (Drag & Drop) və sıranı yadda saxlamaq
+    let dragSrc = null;
+
+    function getIconKey(el) {
+      return el.querySelector('.win-icon-label')?.textContent.trim() || el.textContent.trim();
+    }
+
+    function saveOrder() {
+      cfg.order = [...grid.querySelectorAll('.win-icon')].map(getIconKey);
+      saveCfg();
+    }
+
+    function restoreOrder() {
+      const items = [...grid.querySelectorAll('.win-icon')];
+      if (cfg.order && cfg.order.length) {
+        const map = new Map(items.map(el => [getIconKey(el), el]));
+        cfg.order.forEach(k => {
+          const el = map.get(k);
+          if (el) grid.appendChild(el);
+        });
+      }
+      bindAllStartIcons();
+    }
+
+    function bindAllStartIcons() {
+      grid.querySelectorAll('.win-icon').forEach(icon => {
+        if (icon.dataset.stBound) return;
+        icon.dataset.stBound = '1';
+        icon.setAttribute('draggable', 'true');
+
+        icon.addEventListener('dragstart', (e) => {
+          dragSrc = icon;
+          icon.classList.add('st-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        icon.addEventListener('dragend', () => {
+          icon.classList.remove('st-dragging');
+          grid.querySelectorAll('.win-icon').forEach(x => x.classList.remove('st-over'));
+          dragSrc = null;
+        });
+
+        icon.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (dragSrc && dragSrc !== icon) {
+            icon.classList.add('st-over');
+          }
+        });
+
+        icon.addEventListener('dragleave', () => {
+          icon.classList.remove('st-over');
+        });
+
+        icon.addEventListener('drop', (e) => {
+          e.preventDefault();
+          icon.classList.remove('st-over');
+          if (!dragSrc || dragSrc === icon) return;
+
+          const all = [...grid.querySelectorAll('.win-icon')];
+          const fromIdx = all.indexOf(dragSrc);
+          const toIdx = all.indexOf(icon);
+
+          if (fromIdx < toIdx) {
+            icon.after(dragSrc);
+          } else {
+            icon.before(dragSrc);
+          }
+          saveOrder();
+        });
+      });
+    }
+
+    // Bütün proqramlar (mkApp daxil) yükləndikdən sonra tətbiq edirik
+    setTimeout(() => {
+      applyStartStyle();
+      restoreOrder();
+    }, 450);
+  })();
 </script>
 </html>
