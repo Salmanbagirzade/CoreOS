@@ -5458,5 +5458,392 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       window.coreosShutdown();
     };
   })();
+</script><script>
+  /* ===== CoreOS Paket 5: 15s POST + "Başla" Düyməsi + BSOD + No Bootable Device + Praktika + Quick Settings ===== */
+  (function () {
+    const P5_KEY = 'coreos_pkg5_v1';
+    let p5 = {
+      brightness: 100,
+      volume: 70,
+      wifiOn: true,
+      nightLightOn: false,
+      tasksDone: {
+        biosBoot: false,
+        dnsFix: false,
+        recycleRestore: false
+      }
+    };
+
+    try {
+      Object.assign(p5, JSON.parse(localStorage.getItem(P5_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveP5 = () => {
+      try { localStorage.setItem(P5_KEY, JSON.stringify(p5)); } catch (e) {}
+    };
+
+    // 1. Stil əlavə edirik (BSOD, Quick Settings, Brightness overlay)
+    const st = document.createElement('style');
+    st.textContent = `
+      #coreos-brightness-veil {
+        position: fixed;
+        inset: 0;
+        z-index: 940;
+        background: #000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.12s linear;
+      }
+      #coreos-bsod {
+        position: fixed;
+        inset: 0;
+        z-index: 2600;
+        background: #0f4c81;
+        color: #ffffff;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        padding: clamp(28px, 6vw, 72px);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+      }
+      #coreos-bsod.active { display: flex; }
+      .bsod-face { font-size: clamp(54px, 9vw, 96px); line-height: 1; }
+      .bsod-title { font-size: clamp(20px, 3vw, 30px); font-weight: 400; max-width: 780px; }
+      .bsod-box {
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        padding: 14px 18px;
+        max-width: 760px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      #coreos-quick-panel {
+        position: fixed;
+        right: 12px;
+        bottom: 54px;
+        width: min(330px, 94vw);
+        z-index: 950;
+        background: rgba(24, 29, 41, 0.92);
+        backdrop-filter: blur(16px);
+        border: 1px solid #354056;
+        border-radius: 12px;
+        padding: 14px;
+        color: #f8fafc;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #coreos-quick-panel.open { display: flex; }
+      .qs-tiles {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .qs-tile {
+        background: #222938;
+        border: 1px solid #323c52;
+        border-radius: 8px;
+        padding: 9px 6px;
+        text-align: center;
+        font-size: 11px;
+        cursor: pointer;
+        color: #e2e8f0;
+      }
+      .qs-tile.on {
+        background: #38bdf8;
+        color: #09111e;
+        font-weight: 700;
+        border-color: #38bdf8;
+      }
+      .qs-slider-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+      }
+    `;
+    document.head.appendChild(st);
+
+    // Parlaqlıq pərdəsi
+    const veil = document.createElement('div');
+    veil.id = 'coreos-brightness-veil';
+    document.body.appendChild(veil);
+
+    function applyBrightness() {
+      const ratio = Math.max(20, Math.min(100, Number(p5.brightness) || 100)) / 100;
+      veil.style.opacity = String(1 - ratio);
+    }
+    applyBrightness();
+
+    // 2. BSOD (Mavi Ekran) Komponenti
+    const bsodEl = document.createElement('div');
+    bsodEl.id = 'coreos-bsod';
+    document.body.appendChild(bsodEl);
+
+    window.triggerBSOD = function (stopCode = 'CRITICAL_PROCESS_DIED', reason = 'Kritik sistem prosesi gözlənilmədən dayandırıldı.') {
+      bsodEl.classList.add('active');
+      bsodEl.innerHTML = `
+        <div class="bsod-face">:(</div>
+        <div class="bsod-title">Kompüterinizdə problem yarandı və yenidən başladılmalıdır. Sistem xəta məlumatlarını toplayır...</div>
+        <div style="font-size:18px;font-weight:700;color:#fde047;">100% tamamlandı</div>
+        <div class="bsod-box">
+          <div><b>Stop Code:</b> ${stopCode}</div>
+          <div><b>Səbəb / İzah:</b> ${reason}</div>
+          <div style="margin-top:6px;color:#cbd5e1;">Dərs qeydi: Real Windows-da Stop Code drayver, RAM veya nüvə (kernel) xətasını göstərir.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <button class="btn-primary" id="bsod-restart-btn" style="background:#fff;color:#0f4c81;font-weight:700;">🔄 Yenidən Başlat (POST)</button>
+          <button class="btn-ghost" id="bsod-recover-btn" style="background:rgba(0,0,0,0.3);color:#fff;border-color:rgba(255,255,255,0.4);">🛠️ Xətanı Aradan Qaldır və Masaüstünə Qayıt</button>
+        </div>
+      `;
+      document.getElementById('bsod-restart-btn').onclick = () => {
+        bsodEl.classList.remove('active');
+        if (typeof window.coreosRestart === 'function') window.coreosRestart();
+        else location.reload();
+      };
+      document.getElementById('bsod-recover-btn').onclick = () => {
+        bsodEl.classList.remove('active');
+        if (window.notify) notify('🛠️ BSOD Bərpa Edildi', 'Sistem normal iş rejiminə qaytarıldı.');
+      };
+    };
+
+    // 3. POST ekranını 15 saniyəyə uzatmaq + "Başla" düyməsi (birbaşa kilid ekranına atır) + "No Bootable Device" yoxlaması
+    const bootLayer = document.getElementById('coreos-boot-layer');
+    let postInterval = null;
+
+    function jumpStraightToLockScreen() {
+      clearInterval(postInterval);
+      if (bootLayer) bootLayer.style.display = 'none';
+      if (typeof window.coreosLock === 'function') {
+        window.coreosLock();
+      }
+      if (window.notify) notify('⚡ Sürətli Giriş', 'Kilid ekranına keçildi.');
+    }
+
+    function showNoBootableScreen() {
+      clearInterval(postInterval);
+      if (!bootLayer) return;
+      bootLayer.style.display = 'flex';
+      bootLayer.innerHTML = `
+        <div class="boot-post" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;">
+          <div style="color:#f87171;font-size:18px;font-weight:700;">ERROR: No Bootable Device Found!</div>
+          <div style="color:#e2e8f0;max-width:680px;line-height:1.65;">
+            Sistem yüklənə bilən əməliyyat sistemi diski tapmadı. Bunun səbəbi BIOS-da <b>Boot Order</b> siyahısında diskin olmaması və ya düzgün seçilməməsidir.
+          </div>
+          <div style="color:#facc15;font-size:12.5px;">
+            Həll: <b>[1]</b> düyməsini basıb BIOS-a girin, <b>Boot</b> bölməsində <b>NVMe SSD</b>-ni aktivləşdirin və <b>F10</b> ilə yadda saxlayın.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+            <button class="boot-key-btn" id="nbd-bios-btn" style="padding:9px 14px;">[1] UEFI BIOS-a Gir</button>
+            <button class="boot-key-btn" id="nbd-fix-btn" style="padding:9px 14px;color:#4ade80;border-color:#4ade80;">✅ Diski Bərpa Et və Başla</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('nbd-bios-btn').onclick = () => {
+        const f1 = document.getElementById('btn-f1');
+        if (f1) f1.click();
+      };
+      document.getElementById('nbd-fix-btn').onclick = () => {
+        p5.tasksDone.biosBoot = true;
+        saveP5();
+        jumpStraightToLockScreen();
+      };
+    }
+
+    function upgradePostScreen() {
+      if (!bootLayer) return;
+      const post = bootLayer.querySelector('.boot-post');
+      const bar = bootLayer.querySelector('.boot-keys-bar');
+      if (!post || !bar || post.dataset.p5Upgraded) return;
+      post.dataset.p5Upgraded = '1';
+
+      // Əvvəlki qısa taymeri dayandırıb 15 saniyəlik dəqiq sayğac qururuq
+      clearInterval(postInterval);
+      let leftSec = 15;
+      const cdEl = document.getElementById('post-countdown');
+      const updateCd = () => {
+        if (!cdEl) return;
+        cdEl.innerHTML = `⏳ BIOS / Boot seçimi üçün <b>${leftSec} saniyə</b> qaldı — və ya gözləmədən <b>Başla</b> düyməsini basın.`;
+      };
+      updateCd();
+
+      postInterval = setInterval(() => {
+        leftSec--;
+        if (leftSec <= 0) {
+          clearInterval(postInterval);
+          const escBtn = document.getElementById('btn-esc');
+          if (escBtn) escBtn.click();
+          else jumpStraightToLockScreen();
+        } else {
+          updateCd();
+        }
+      }, 1000);
+
+      // "Başla" düyməsi (birbaşa kilid ekranına atır)
+      const startNowBtn = document.createElement('button');
+      startNowBtn.className = 'boot-key-btn';
+      startNowBtn.id = 'btn-start-now';
+      startNowBtn.style.cssText = 'background:#0284c7;color:#fff;border-color:#38bdf8;padding:7px 14px;';
+      startNowBtn.textContent = '🚀 Başla (Kilid Ekranına Keç)';
+      startNowBtn.onclick = jumpStraightToLockScreen;
+      bar.appendChild(startNowBtn);
+
+      // Əgər istifadəçi BIOS-da bütün boot cihazlarını silibsə, "No Bootable Device" göstəririk
+      try {
+        const biosSaved = JSON.parse(localStorage.getItem('coreos_uefi_bios_v1') || '{}');
+        if (Array.isArray(biosSaved.bootOrder) && biosSaved.bootOrder.length === 0) {
+          showNoBootableScreen();
+        }
+      } catch (e) {}
+    }
+
+    if (bootLayer) {
+      const obs = new MutationObserver(upgradePostScreen);
+      obs.observe(bootLayer, { childList: true, subtree: true });
+      upgradePostScreen();
+    }
+
+    // 4. Sürətli Parametrlər Paneli (Parlaqlıq + Night Light + Wi-Fi + Səs)
+    const qPanel = document.createElement('div');
+    qPanel.id = 'coreos-quick-panel';
+    qPanel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <b style="font-size:13px;color:#38bdf8;">⚡ Sürətli Parametrlər</b>
+        <button class="btn-ghost" id="qs-close" style="padding:2px 7px;font-size:11px;">✕</button>
+      </div>
+      <div class="qs-tiles">
+        <button class="qs-tile ${p5.wifiOn ? 'on' : ''}" id="qs-wifi">📶 Wi-Fi<br><span>${p5.wifiOn ? 'Açıq' : 'Bağlı'}</span></button>
+        <button class="qs-tile ${p5.nightLightOn ? 'on' : ''}" id="qs-nl">🌙 Night Light<br><span>${p5.nightLightOn ? 'Açıq' : 'Bağlı'}</span></button>
+        <button class="qs-tile" id="qs-bsod-test">🟦 BSOD<br><span>Test</span></button>
+      </div>
+      <div class="qs-slider-row">
+        <span>☀️ Parlaqlıq</span>
+        <input id="qs-br-rng" type="range" min="25" max="100" value="${p5.brightness}" style="flex:1;">
+        <span id="qs-br-val" style="width:38px;text-align:right;">${p5.brightness}%</span>
+      </div>
+      <div class="qs-slider-row">
+        <span>🔊 Səs</span>
+        <input id="qs-vol-rng" type="range" min="0" max="100" value="${p5.volume}" style="flex:1;">
+        <span id="qs-vol-val" style="width:38px;text-align:right;">${p5.volume}%</span>
+      </div>
+    `;
+    document.body.appendChild(qPanel);
+
+    const brRng = document.getElementById('qs-br-rng');
+    const brVal = document.getElementById('qs-br-val');
+    brRng.oninput = () => {
+      p5.brightness = +brRng.value;
+      brVal.textContent = p5.brightness + '%';
+      saveP5();
+      applyBrightness();
+    };
+
+    const volRng = document.getElementById('qs-vol-rng');
+    const volVal = document.getElementById('qs-vol-val');
+    volRng.oninput = () => {
+      p5.volume = +volRng.value;
+      volVal.textContent = p5.volume + '%';
+      saveP5();
+    };
+
+    document.getElementById('qs-wifi').onclick = function () {
+      p5.wifiOn = !p5.wifiOn;
+      this.classList.toggle('on', p5.wifiOn);
+      this.innerHTML = `📶 Wi-Fi<br><span>${p5.wifiOn ? 'Açıq' : 'Bağlı'}</span>`;
+      saveP5();
+      if (window.notify) notify('📶 Wi-Fi', p5.wifiOn ? 'Şəbəkə aktivdir' : 'Wi-Fi söndürüldü');
+    };
+
+    document.getElementById('qs-nl').onclick = function () {
+      p5.nightLightOn = !p5.nightLightOn;
+      this.classList.toggle('on', p5.nightLightOn);
+      this.innerHTML = `🌙 Night Light<br><span>${p5.nightLightOn ? 'Açıq' : 'Bağlı'}</span>`;
+      saveP5();
+      const nlOverlay = [...document.querySelectorAll('div')].find(d => d.style.mixBlendMode === 'multiply');
+      if (nlOverlay) nlOverlay.style.display = p5.nightLightOn ? 'block' : 'none';
+    };
+
+    document.getElementById('qs-bsod-test').onclick = () => {
+      qPanel.classList.remove('open');
+      window.triggerBSOD('MEMORY_MANAGEMENT', 'DDR5 yaddaş səhifələmə xətası simulyasiya edildi.');
+    };
+
+    document.getElementById('qs-close').onclick = () => qPanel.classList.remove('open');
+
+    // Alt paneldə saat sahəsinə klikləyəndə Sürətli Parametrləri açırıq
+    setTimeout(() => {
+      const trayClock = document.getElementById('tb-clock') || document.querySelector('.tb-right');
+      if (trayClock) {
+        trayClock.style.cursor = 'pointer';
+        trayClock.title = 'Sürətli Parametrlər';
+        trayClock.addEventListener('click', (e) => {
+          e.stopPropagation();
+          qPanel.classList.toggle('open');
+        });
+      }
+    }, 600);
+
+    // 5. Proqram: BSOD Laboratoriyası & Dərs Praktika Tapşırıqları
+    if (typeof window.mkApp === 'function') {
+      window.mkApp(
+        'bsodlab',
+        '🟦',
+        'BSOD & Dərs',
+        'BSOD Simulyatoru və Praktika Tapşırıqları',
+        700,
+        490,
+        `
+          <div class="card">
+            <b style="color:#38bdf8;">🟦 Mavi Ekran (BSOD) Stop Code Simulyatoru</b>
+            <p style="font-size:11.5px;color:#94a3b8;margin:4px 0 10px;">
+              Tələbələrə fərqli mavi ekran xəta kodlarını göstərmək üçün birini seçin:
+            </p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn-ghost bsod-trig" data-c="CRITICAL_PROCESS_DIED" data-r="Sistemin əsas proseslərindən biri dayandı.">CRITICAL_PROCESS_DIED</button>
+              <button class="btn-ghost bsod-trig" data-c="IRQL_NOT_LESS_OR_EQUAL" data-r="Drayver yüksək IRQL səviyyəsində yanlış yaddaş ünvanına müraciət etdi.">IRQL_NOT_LESS_OR_EQUAL</button>
+              <button class="btn-ghost bsod-trig" data-c="WHEA_UNCORRECTABLE_ERROR" data-r="Aparat (CPU / PCIe / NVMe) səviyyəsində bərpa olunmayan xəta baş verdi.">WHEA_UNCORRECTABLE_ERROR</button>
+              <button class="btn-ghost" id="bsod-noboot-demo">⚠️ No Bootable Device</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <b style="color:#4ade80;">🎓 Dərs Praktika Tapşırıqları (Kşats-25/01)</b>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#141923;padding:8px 10px;border-radius:6px;">
+                <span>1. POST / BIOS ekranında <b>[1]</b> ilə BIOS-a girib ayarlara baxmaq</span>
+                <button class="btn-ghost task-chk" data-k="biosBoot">${p5.tasksDone.biosBoot ? '✅ Tamamlandı' : 'Yoxla'}</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#141923;padding:8px 10px;border-radius:6px;">
+                <span>2. <b>Xəta Lab</b>-da DNS / IP xətasını sınayıb bərpa etmək</span>
+                <button class="btn-ghost task-chk" data-k="dnsFix">${p5.tasksDone.dnsFix ? '✅ Tamamlandı' : 'Yoxla'}</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#141923;padding:8px 10px;border-radius:6px;">
+                <span>3. <b>Zibil Qutusu</b>-ndan silinmiş faylı geri bərpa etmək</span>
+                <button class="btn-ghost task-chk" data-k="recycleRestore">${p5.tasksDone.recycleRestore ? '✅ Tamamlandı' : 'Yoxla'}</button>
+              </div>
+            </div>
+          </div>
+        `,
+        () => {
+          document.querySelectorAll('.bsod-trig').forEach(b => {
+            b.onclick = () => window.triggerBSOD(b.dataset.c, b.dataset.r);
+          });
+          document.getElementById('bsod-noboot-demo').onclick = showNoBootableScreen;
+          document.querySelectorAll('.task-chk').forEach(b => {
+            b.onclick = () => {
+              const k = b.dataset.k;
+              p5.tasksDone[k] = !p5.tasksDone[k];
+              saveP5();
+              b.textContent = p5.tasksDone[k] ? '✅ Tamamlandı' : 'Yoxla';
+              if (p5.tasksDone[k] && window.notify) notify('🎓 Tapşırıq Qeyd Olundu', 'Praktika tapşırığı tamamlandı!');
+            };
+          });
+        }
+      );
+    }
+  })();
 </script>
 </html>
