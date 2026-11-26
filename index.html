@@ -5845,5 +5845,45 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       );
     }
   })();
-</script>
+</script><section id="os-knowledge-base" class="docs-section">
+  <h2>Əməliyyat Sistemləri — Texniki Konspekt və Sistem İdarəetməsi</h2>
+
+  <div class="os-card">
+    <h3>1. Nüvə (Kernel) və Sistem Arxitekturası</h3>
+    <ul>
+      <li><strong>User Mode vs. Kernel Mode:</strong> Tətbiqlər təhlükəsizlik üçün User Mode-da işləyir, aparat resurslarına isə yalnız <em>System Call</em> vasitəsilə Kernel Mode-da müraciət olunur.</li>
+      <li><strong>Nüvə tipləri:</strong> Monolit (Linux), Mikronüvə (Minix, QNX), Hibrid (Windows NT, macOS XNU), Ekzonüvə.</li>
+      <li><strong>Kritik Windows prosesləri:</strong> <code>ntoskrnl.exe</code> (nüvə), <code>hal.dll</code> (aparat qatı), <code>smss.exe</code> (sessiya meneceri), <code>csrss.exe</code>, <code>winlogon.exe</code>, <code>services.exe</code>, <code>svchost.exe</code>, <code>lsass.exe</code> (təhlükəsizlik), <code>explorer.exe</code>.</li>
+      <li><strong>Linux Yüklənmə Zənciri:</strong> Firmware (UEFI) &rarr; Bootloader (GRUB) &rarr; Kernel + initramfs &rarr; <code>systemd</code> (PID 1) &rarr; Target/Login.</li>
+    </ul>
+  </div>
+
+  <div class="os-card">
+    <h3>2. Proseslər, Yaddaş və Planlaşdırma</h3>
+    <ul>
+      <li><strong>İyerarxiya:</strong> Proqram (diskdəki kod) &rarr; Proses (yaddaşda icra + PCB) &rarr; Thread (icra axını).</li>
+      <li><strong>CPU Planlaşdırma alqoritmləri:</strong> FCFS, SJF, Round Robin (time slice/kvant ilə), Priority Scheduling.</li>
+      <li><strong>Yaddaş və Virtual Yaddaş:</strong> Registrlər &rarr; L1/L2/L3 Cache &rarr; RAM &rarr; Swap / <code>pagefile.sys</code>. Səhifə çatışmazlığı <em>Page Fault</em>, həddindən artıq səhifə mübadiləsi isə <em>Thrashing</em> yaradır.</li>
+      <li><strong>SSD vs. HDD Baxımı:</strong> HDD-də defraqmentasiya (<code>Optimize-Volume -Defrag</code>), SSD-də isə yalnız <strong>TRIM</strong> (<code>fstrim</code>) tətbiq olunur.</li>
+    </ul>
+  </div>
+
+  <div class="os-card">
+    <h3>3. Fayl Sistemləri və Disk Bölmələri</h3>
+    <ul>
+      <li><strong>Fayl sistemləri:</strong> <strong>FAT32</strong> (max 4 GB fayl), <strong>exFAT</strong> (flash/böyük fayllar), <strong>NTFS</strong> (MFT, jurnal, ACL icazələri, EFS), <strong>ReFS</strong> (yüksək dayanıqlılıq), <strong>ext4 / XFS / Btrfs</strong> (Linux).</li>
+      <li><strong>MBR vs. GPT:</strong> MBR (max 2 TB, 4 əsas bölmə); GPT (&gt;2 TB, 128 bölmə, ehtiyat başlıq, UEFI standartı; <code>mbr2gpt</code> ilə çevrilmə).</li>
+      <li><strong>Bütövlük və Təmiz Silmə:</strong> Hash yoxlaması (<code>Get-FileHash -Algorithm SHA256</code> / <code>sha256sum</code>), təhlükəsiz silmə (<code>cipher /w</code>, <code>shred</code>).</li>
+    </ul>
+  </div>
+
+  <div class="os-card">
+    <h3>4. Təhlükəsizlik, İcazələr və Ehtiyat Nüsxə</h3>
+    <ul>
+      <li><strong>İcazə Məntiqi:</strong> NTFS-də <em>Explicit Deny</em> həmişə <em>Allow</em>-dan üstündür. Linux-da <code>chmod</code> (4=r, 2=w, 1=x), <code>chown</code>, <code>umask</code> və <em>Least Privilege</em> prinsipi tətbiq edilir.</li>
+      <li><strong>3-2-1 Ehtiyat Nüsxə Qaydası:</strong> 3 nüsxə, 2 fərqli daşıyıcıda, 1 nüsxə kənarda (off-site / bulud). Növləri: Full, Incremental, Differential.</li>
+      <li><strong>Bərpa və Diaqnostika:</strong> <code>sfc /scannow</code>, <code>DISM /Online /Cleanup-Image /RestoreHealth</code>, <code>chkdsk</code>, <code>fsck</code>, <code>journalctl -xe</code>, <code>dmesg</code>.</li>
+    </ul>
+  </div>
+</section>
 </html>
