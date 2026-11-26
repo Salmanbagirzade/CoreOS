@@ -5090,5 +5090,108 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
     // Səhifə açılan kimi real kompüter kimi POST -> Logo -> Kilid Ekranı ardıcıllığını başladırıq
     startPostSequence();
   })();
+</script><script>
+  /* ===== POST & UEFI BIOS Klaviatura + Fokus + Rahat Giriş Düzəlişi ===== */
+  (function () {
+    const bootLayer = document.getElementById('coreos-boot-layer');
+    if (!bootLayer) return;
+
+    // 1. Səhifə açılan kimi fokusu boot ekranına veririk
+    bootLayer.setAttribute('tabindex', '0');
+    bootLayer.focus();
+
+    // 2. POST ekranını izləyib həm 1/2/3 düymələrini, həm də böyük ekranda klik düymələrini qoşuruq
+    const enhancePost = () => {
+      const bar = bootLayer.querySelector('.boot-keys-bar');
+      const post = bootLayer.querySelector('.boot-post');
+      if (!bar || !post || bar.dataset.fixed) return;
+      bar.dataset.fixed = '1';
+
+      bootLayer.focus();
+
+      // Brauzerin F1/F12 açmasının qarşısını almaq üçün alternativ 1, 2, 3 düymələri göstəririk
+      const f1Btn = document.getElementById('btn-f1');
+      const f12Btn = document.getElementById('btn-f12');
+      const f8Btn = document.getElementById('btn-f8');
+      const escBtn = document.getElementById('btn-esc');
+
+      if (f1Btn) f1Btn.innerHTML = '⚙️ <b>[1]</b> və ya <b>F1</b> : BIOS Setup';
+      if (f12Btn) f12Btn.innerHTML = '💿 <b>[2]</b> və ya <b>F12</b> : Boot Menu';
+      if (f8Btn) f8Btn.innerHTML = '🛠️ <b>[3]</b> və ya <b>F8</b> : Safe Mode';
+      if (escBtn) escBtn.innerHTML = '▶️ <b>[Enter]</b> : Sistemi Başlat';
+
+      // Əlavə rahatlıq üçün ekranın ortasına da böyük seçim paneli qoyuruq
+      const quickBox = document.createElement('div');
+      quickBox.style.cssText = 'margin-top:18px;padding:12px 14px;background:#0f172a;border:1px solid #38bdf8;border-radius:8px;display:inline-block;';
+      quickBox.innerHTML = `
+        <div style="color:#38bdf8;font-weight:700;margin-bottom:8px;">🎓 Dərs / Texnik Rejimi (Klaviaturadan 1, 2, 3 basın və ya klikləyin):</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="boot-key-btn" id="q-bios" style="padding:8px 14px;font-size:13px;">[1] UEFI BIOS-a Gir</button>
+          <button class="boot-key-btn" id="q-boot" style="padding:8px 14px;font-size:13px;">[2] Boot Menu (USB/SSD)</button>
+          <button class="boot-key-btn" id="q-safe" style="padding:8px 14px;font-size:13px;">[3] Safe Mode</button>
+        </div>
+      `;
+      post.appendChild(quickBox);
+
+      document.getElementById('q-bios').onclick = () => f1Btn && f1Btn.click();
+      document.getElementById('q-boot').onclick = () => f12Btn && f12Btn.click();
+      document.getElementById('q-safe').onclick = () => f8Btn && f8Btn.click();
+    };
+
+    const obs = new MutationObserver(enhancePost);
+    obs.observe(bootLayer, { childList: true, subtree: true });
+    enhancePost();
+
+    // 3. Klaviaturadan 1, 2, 3, Enter və F1/F8/F12 düymələrini ən yüksək prioritetlə (capture) tuturuq
+    window.addEventListener('keydown', (e) => {
+      if (bootLayer.style.display === 'none') return;
+
+      const f1Btn = document.getElementById('btn-f1');
+      const f12Btn = document.getElementById('btn-f12');
+      const f8Btn = document.getElementById('btn-f8');
+      const escBtn = document.getElementById('btn-esc');
+
+      // POST ekranındayıqsa:
+      if (f1Btn) {
+        if (e.key === '1' || e.key === 'F1' || e.key === 'F2' || e.key === 'Delete') {
+          e.preventDefault();
+          e.stopPropagation();
+          f1Btn.click();
+        } else if (e.key === '2' || e.key === 'F12') {
+          e.preventDefault();
+          e.stopPropagation();
+          f12Btn.click();
+        } else if (e.key === '3' || e.key === 'F8') {
+          e.preventDefault();
+          e.stopPropagation();
+          f8Btn.click();
+        } else if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          escBtn.click();
+        }
+        return;
+      }
+
+      // BIOS Setup içindəyiksə (ox düymələri ilə tab dəyişmə + F10/ESC):
+      const uefiTabs = [...bootLayer.querySelectorAll('.uefi-tab')];
+      if (uefiTabs.length) {
+        const curIdx = uefiTabs.findIndex(t => t.classList.contains('active'));
+        if (e.key === 'ArrowRight' && curIdx >= 0) {
+          e.preventDefault();
+          uefiTabs[(curIdx + 1) % uefiTabs.length].click();
+        } else if (e.key === 'ArrowLeft' && curIdx >= 0) {
+          e.preventDefault();
+          uefiTabs[(curIdx - 1 + uefiTabs.length) % uefiTabs.length].click();
+        } else if (e.key === 'F10') {
+          e.preventDefault();
+          document.getElementById('uf-f10')?.click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          document.getElementById('uf-esc')?.click();
+        }
+      }
+    }, true);
+  })();
 </script>
 </html>
