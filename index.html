@@ -4518,5 +4518,577 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       );
     }
   })();
+</script><script>
+  /* ===== CoreOS Real Boot Sequence: POST + UEFI BIOS (F1/F2/DEL) + Boot Menu (F12) + Safe Mode (F8) + Logo & Startup Sound ===== */
+  (function () {
+    const BIOS_KEY = 'coreos_uefi_bios_v1';
+    let biosCfg = {
+      bootOrder: ['NVMe SSD (CoreOS OS)', 'USB Flash (Puppy Linux Live)', 'PXE Network Boot (IPv4)'],
+      secureBoot: true,
+      fastBoot: false,
+      virtualization: true,
+      xmpProfile: 'DDR5-5600 XMP',
+      sataMode: 'AHCI',
+      tpm2: true
+    };
+
+    try {
+      Object.assign(biosCfg, JSON.parse(localStorage.getItem(BIOS_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveBios = () => {
+      try { localStorage.setItem(BIOS_KEY, JSON.stringify(biosCfg)); } catch (e) {}
+    };
+
+    // CoreOS Loqosu (göndərdiyin şəklin birebir vektor versiyası)
+    const COREOS_LOGO_SVG = `
+      <svg width="96" height="96" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="55%" stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </radialGradient>
+        </defs>
+        <rect x="14" y="14" width="42" height="42" rx="10" fill="#4f8df9"/>
+        <rect x="64" y="14" width="42" height="42" rx="10" fill="#2cc692"/>
+        <rect x="14" y="64" width="42" height="42" rx="10" fill="#f58a38"/>
+        <rect x="64" y="64" width="42" height="42" rx="10" fill="#8b5cf6"/>
+        <circle cx="60" cy="60" r="19" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+        <circle cx="60" cy="60" r="13" fill="url(#coreGlow)"/>
+        <circle cx="60" cy="60" r="6.5" fill="#ffffff"/>
+      </svg>
+    `;
+
+    // Səs effektləri (POST Beep + Windows/CoreOS Açılış Melodiyası)
+    function playBootSound(kind = 'startup') {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+
+        if (kind === 'beep') {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'square';
+          o.frequency.setValueAtTime(920, now);
+          g.gain.setValueAtTime(0.05, now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now); o.stop(now + 0.14);
+          return;
+        }
+
+        // Windows 11 üslubunda yumşaq harmonik açılış akkordu
+        const notes = [329.63, 415.30, 493.88, 659.25]; // E4, G#4, B4, E5
+        notes.forEach((freq, i) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.11);
+          g.gain.setValueAtTime(0.0001, now + i * 0.11);
+          g.gain.linearRampToValueAtTime(0.045, now + i * 0.11 + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.11 + 1.15);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now + i * 0.11);
+          o.stop(now + i * 0.11 + 1.2);
+        });
+      } catch (e) {}
+    }
+
+    // CSS Stilləri (POST, UEFI BIOS, Boot Menu, Windows Spinner)
+    const st = document.createElement('style');
+    st.textContent = `
+      #coreos-boot-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: #000000;
+        color: #e2e8f0;
+        font-family: Consolas, 'Courier New', monospace;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        user-select: none;
+      }
+      .boot-post {
+        padding: 24px 28px;
+        font-size: 13.5px;
+        line-height: 1.65;
+        color: #d1d5db;
+      }
+      .boot-keys-bar {
+        background: #111827;
+        border-top: 1px solid #374151;
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+      }
+      .boot-key-btn {
+        background: #1f2937;
+        border: 1px solid #4b5563;
+        color: #38bdf8;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 700;
+      }
+      .boot-key-btn:hover { background: #374151; border-color: #38bdf8; }
+
+      /* Windows-style Logo + Fırlanan Dairə */
+      .boot-os-splash {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 34px;
+        background: #05070c;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+      .win11-spinner {
+        width: 38px;
+        height: 38px;
+        border: 3.5px solid rgba(56, 189, 248, 0.18);
+        border-top-color: #38bdf8;
+        border-right-color: #34d399;
+        border-radius: 50%;
+        animation: coreSpin 0.85s linear infinite;
+      }
+      @keyframes coreSpin { to { transform: rotate(360deg); } }
+
+      /* Birebir UEFI BIOS Ekranı */
+      .uefi-screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #0c1938;
+        color: #f8fafc;
+        font-family: Consolas, 'Segoe UI', monospace;
+      }
+      .uefi-top {
+        background: #162b5c;
+        border-bottom: 2px solid #38bdf8;
+        padding: 10px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+      }
+      .uefi-tabs {
+        display: flex;
+        background: #09132b;
+        border-bottom: 1px solid #274485;
+        overflow-x: auto;
+      }
+      .uefi-tab {
+        padding: 9px 18px;
+        border: none;
+        background: transparent;
+        color: #93c5fd;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .uefi-tab.active {
+        background: #0c1938;
+        color: #facc15;
+        border-top: 2px solid #facc15;
+      }
+      .uefi-body {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 14px;
+        padding: 16px 20px;
+        overflow-y: auto;
+      }
+      .uefi-panel {
+        border: 1px solid #2c4c94;
+        background: rgba(9, 19, 43, 0.65);
+        padding: 14px;
+        border-radius: 4px;
+      }
+      .uefi-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 8px;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.14);
+        font-size: 13px;
+      }
+      .uefi-row:hover { background: rgba(56, 189, 248, 0.12); }
+      .uefi-val { color: #facc15; font-weight: 700; cursor: pointer; }
+      .uefi-foot {
+        background: #162b5c;
+        border-top: 1px solid #38bdf8;
+        padding: 8px 18px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+      }
+      @media (max-width: 720px) {
+        .uefi-body { grid-template-columns: 1fr; }
+      }
+    `;
+    document.head.appendChild(st);
+
+    const bootLayer = document.createElement('div');
+    bootLayer.id = 'coreos-boot-layer';
+    document.body.appendChild(bootLayer);
+
+    let bootTimer = null;
+    let bootMode = 'Normal'; // 'Normal' | 'Safe Mode' | 'USB Live'
+
+    function finishBootToLockScreen() {
+      clearTimeout(bootTimer);
+      playBootSound('startup');
+      bootLayer.style.display = 'none';
+
+      // Kilid ekranını aktivləşdiririk (əvvəlki paketdəki coreosLock varsa onu açır)
+      if (typeof window.coreosLock === 'function') {
+        window.coreosLock();
+      }
+      if (window.notify && bootMode !== 'Normal') {
+        notify('🛠️ Boot Rejimi', `Sistem "${bootMode}" rejimində yükləndi.`);
+      }
+    }
+
+    function startOsLogoSplash(selectedMode = 'Normal') {
+      bootMode = selectedMode;
+      clearTimeout(bootTimer);
+      bootLayer.style.display = 'flex';
+      bootLayer.innerHTML = `
+        <div class="boot-os-splash">
+          <div style="text-align:center;">
+            ${COREOS_LOGO_SVG}
+            <div style="font-size:20px;font-weight:700;letter-spacing:1.5px;margin-top:12px;color:#f8fafc;">CoreOS</div>
+            ${selectedMode !== 'Normal' ? `<div style="margin-top:6px;font-size:12px;color:#facc15;">[ ${selectedMode} ]</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div class="win11-spinner"></div>
+            <div id="boot-splash-txt" style="font-size:12.5px;color:#94a3b8;">Sistem xidmətləri başladılır...</div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const t = document.getElementById('boot-splash-txt');
+        if (t) t.textContent = 'İstifadəçi profili hazırlanır...';
+      }, 1200);
+
+      bootTimer = setTimeout(finishBootToLockScreen, 2500);
+    }
+
+    // 1. POST Ekranı (F1, ESC, F8, F12 düymələri)
+    function startPostSequence() {
+      clearTimeout(bootTimer);
+      bootLayer.style.display = 'flex';
+      playBootSound('beep');
+
+      bootLayer.innerHTML = `
+        <div class="boot-post">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <div style="color:#38bdf8;font-weight:700;font-size:15px;">AMI Aptio UEFI BIOS Utility — Version 2.26.1289</div>
+              <div style="color:#94a3b8;font-size:12px;">ASUS Vivobook S 16 Platform · ADPU Kşats-25/01 Lab</div>
+            </div>
+            <div style="border:1px solid #374151;padding:6px 10px;border-radius:6px;font-size:11px;color:#34d399;">
+              TPM 2.0: ${biosCfg.tpm2 ? 'ENABLED' : 'DISABLED'} · Secure Boot: ${biosCfg.secureBoot ? 'ON' : 'OFF'}
+            </div>
+          </div>
+          <hr style="border:none;border-top:1px solid #1f2937;margin:14px 0;">
+          <div>CPU: <b>Intel(R) Core(TM) 5 210H @ 2.20GHz (8 Cores / 12 Threads)</b></div>
+          <div>Memory Test: <span style="color:#4ade80;">16384 MB DDR5 OK</span> (${biosCfg.xmpProfile})</div>
+          <div>SATA/NVMe Controller: <b>${biosCfg.sataMode} Mode</b></div>
+          <div style="margin-top:8px;color:#9ca3af;">
+            Detecting Storage Devices...<br>
+            &nbsp;&nbsp;M.2_1: NVMe 512GB SSD [CoreOS Boot Manager]<br>
+            &nbsp;&nbsp;USB_1: Kingston DataTraveler 32GB [Puppy Linux Live]<br>
+            &nbsp;&nbsp;NET_0: Realtek PCIe GbE Family Controller
+          </div>
+          <div style="margin-top:16px;color:#facc15;" id="post-countdown">
+            Avtomatik yüklənməyə 3 saniyə qaldı... (Aşağıdakı düymələri basın və ya klikləyin)
+          </div>
+        </div>
+
+        <div class="boot-keys-bar">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="boot-key-btn" id="btn-f1">F1 / DEL : BIOS Setup</button>
+            <button class="boot-key-btn" id="btn-f12">F12 : Boot Menu</button>
+            <button class="boot-key-btn" id="btn-f8">F8 : Safe Mode / Təmir</button>
+            <button class="boot-key-btn" id="btn-esc">ESC : Keç (Boot Now)</button>
+          </div>
+          <div style="color:#9ca3af;font-size:11.5px;">Klaviatura və ya mausla seçin</div>
+        </div>
+      `;
+
+      document.getElementById('btn-f1').onclick = openBiosSetup;
+      document.getElementById('btn-f12').onclick = openBootMenu;
+      document.getElementById('btn-f8').onclick = openF8Recovery;
+      document.getElementById('btn-esc').onclick = () => startOsLogoSplash('Normal');
+
+      let sec = biosCfg.fastBoot ? 1 : 3;
+      const tick = () => {
+        const el = document.getElementById('post-countdown');
+        if (!el) return;
+        if (sec <= 0) {
+          startOsLogoSplash('Normal');
+          return;
+        }
+        el.textContent = `Avtomatik yüklənməyə ${sec} saniyə qaldı... (BIOS üçün F1, Boot Menu üçün F12 basın)`;
+        sec--;
+        bootTimer = setTimeout(tick, 1000);
+      };
+      tick();
+    }
+
+    // 2. Birebir UEFI BIOS Setup Ekranı (F1 / F2 / DEL)
+    function openBiosSetup() {
+      clearTimeout(bootTimer);
+      let activeTab = 'Main';
+      let helpText = 'BIOS bölmələri arasında keçid edin və dəyərlərin üzərinə klikləyərək dəyişdirin.';
+
+      function renderBios() {
+        const tabs = ['Main', 'Advanced', 'Boot', 'Security', 'Exit'];
+        let leftHtml = '';
+
+        if (activeTab === 'Main') {
+          leftHtml = `
+            <div class="uefi-row"><span>BIOS Version</span><span>CoreOS-UEFI v3.20 (11/26/2026)</span></div>
+            <div class="uefi-row"><span>Processor Type</span><span>Intel Core 5 210H</span></div>
+            <div class="uefi-row"><span>Total Memory</span><span>16384 MB (DDR5)</span></div>
+            <div class="uefi-row" data-h="Yaddaş sürət profilini (JEDEC / XMP) dəyişir.">
+              <span>Memory Profile</span>
+              <span class="uefi-val" id="b-xmp">[${biosCfg.xmpProfile}]</span>
+            </div>
+            <div class="uefi-row"><span>System Time / Date</span><span>${new Date().toTimeString().slice(0,8)} · 26/11/2026</span></div>
+            <div class="uefi-row"><span>Student / Technician</span><span>Salman Bağırzadə (Kşats-25/01)</span></div>
+          `;
+        } else if (activeTab === 'Advanced') {
+          leftHtml = `
+            <div class="uefi-row" data-h="Virtual maşınlar (VMware, VirtualBox, WSL) üçün VT-x texnologiyasını açır.">
+              <span>Intel Virtualization Technology (VT-x)</span>
+              <span class="uefi-val" id="b-vt">[${biosCfg.virtualization ? 'Enabled' : 'Disabled'}]</span>
+            </div>
+            <div class="uefi-row" data-h="NVMe və SATA disklərin iş rejimini (AHCI / RAID) təyin edir.">
+              <span>SATA / NVMe Controller Mode</span>
+              <span class="uefi-val" id="b-sata">[${biosCfg.sataMode}]</span>
+            </div>
+            <div class="uefi-row"><span>CPU Temperature</span><span style="color:#4ade80;">44°C / 111°F</span></div>
+            <div class="uefi-row"><span>CPU Fan Speed</span><span style="color:#38bdf8;">2150 RPM</span></div>
+          `;
+        } else if (activeTab === 'Boot') {
+          leftHtml = `
+            <div class="uefi-row" data-h="POST gözləmə müddətini qısaldır.">
+              <span>Fast Boot</span>
+              <span class="uefi-val" id="b-fast">[${biosCfg.fastBoot ? 'Enabled' : 'Disabled'}]</span>
+            </div>
+            <div style="margin:10px 0 6px;color:#93c5fd;font-size:12px;">Boot Option Priorities (Sıranı dəyişmək üçün klikləyin):</div>
+            ${biosCfg.bootOrder.map((dev, idx) => `
+              <div class="uefi-row" data-h="Birinci sıradakı cihaz kompüter açılarkən ilk oxunur.">
+                <span>Boot Option #${idx + 1}</span>
+                <span class="uefi-val b-ord" data-i="${idx}">[${dev}] ⇅</span>
+              </div>
+            `).join('')}
+          `;
+        } else if (activeTab === 'Security') {
+          leftHtml = `
+            <div class="uefi-row" data-h="Windows 11 və CoreOS üçün imzasız yükləyicilərin qarşısını alır.">
+              <span>Secure Boot Control</span>
+              <span class="uefi-val" id="b-sec">[${biosCfg.secureBoot ? 'Enabled' : 'Disabled'}]</span>
+            </div>
+            <div class="uefi-row" data-h="Trusted Platform Module 2.0 təhlükəsizlik çipi.">
+              <span>TPM 2.0 Device</span>
+              <span class="uefi-val" id="b-tpm">[${biosCfg.tpm2 ? 'Enabled' : 'Disabled'}]</span>
+            </div>
+            <div class="uefi-row"><span>Administrator Password</span><span style="color:#94a3b8;">Not Installed</span></div>
+          `;
+        } else if (activeTab === 'Exit') {
+          leftHtml = `
+            <div class="uefi-row"><span class="uefi-val" id="b-save-exit">▶ Save Changes and Reset (F10)</span></div>
+            <div class="uefi-row"><span class="uefi-val" id="b-discard-exit" style="color:#cbd5e1;">▶ Discard Changes and Exit (ESC)</span></div>
+            <div class="uefi-row"><span class="uefi-val" id="b-defaults" style="color:#38bdf8;">▶ Restore Optimized Defaults (F9)</span></div>
+          `;
+        }
+
+        bootLayer.innerHTML = `
+          <div class="uefi-screen">
+            <div class="uefi-top">
+              <b>CoreOS Aptio Setup Utility — UEFI BIOS</b>
+              <span>Hardware Monitor &amp; Boot Configuration</span>
+            </div>
+            <div class="uefi-tabs">
+              ${tabs.map(t => `<button class="uefi-tab ${t === activeTab ? 'active' : ''}" data-t="${t}">${t}</button>`).join('')}
+            </div>
+            <div class="uefi-body">
+              <div class="uefi-panel">${leftHtml}</div>
+              <div class="uefi-panel">
+                <div style="color:#facc15;font-weight:700;margin-bottom:8px;">Item Specific Help</div>
+                <div id="uefi-help" style="font-size:12.5px;line-height:1.6;color:#cbd5e1;">${helpText}</div>
+                <hr style="border:none;border-top:1px solid #274485;margin:14px 0;">
+                <div style="font-size:11.5px;color:#93c5fd;line-height:1.6;">
+                  <b>Dərs Qeydi:</b><br>
+                  • <b>Boot Order:</b> USB-dən sistem yazmaq üçün USB Flash 1-ci yerə qoyulur.<br>
+                  • <b>Secure Boot &amp; TPM 2.0:</b> Müasir Windows 11 tələbləridir.<br>
+                  • <b>AHCI:</b> SSD disklər üçün standart rejimdir.
+                </div>
+              </div>
+            </div>
+            <div class="uefi-foot">
+              <div>Click / Enter: Select &nbsp;|&nbsp; F9: Defaults &nbsp;|&nbsp; F10: Save &amp; Exit &nbsp;|&nbsp; ESC: Exit</div>
+              <div style="display:flex;gap:8px;">
+                <button class="boot-key-btn" id="uf-f10">F10: Save &amp; Boot</button>
+                <button class="boot-key-btn" id="uf-esc">ESC: Exit</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        bootLayer.querySelectorAll('.uefi-tab').forEach(b => {
+          b.onclick = () => { activeTab = b.dataset.t; renderBios(); };
+        });
+        bootLayer.querySelectorAll('.uefi-row[data-h]').forEach(r => {
+          r.onmouseenter = () => {
+            const h = document.getElementById('uefi-help');
+            if (h) h.textContent = r.dataset.h;
+          };
+        });
+
+        const bindToggle = (id, fn) => {
+          const el = document.getElementById(id);
+          if (el) el.onclick = () => { fn(); saveBios(); renderBios(); };
+        };
+
+        bindToggle('b-xmp', () => { biosCfg.xmpProfile = biosCfg.xmpProfile.includes('5600') ? 'DDR5-4800 JEDEC' : 'DDR5-5600 XMP'; });
+        bindToggle('b-vt', () => { biosCfg.virtualization = !biosCfg.virtualization; });
+        bindToggle('b-sata', () => { biosCfg.sataMode = biosCfg.sataMode === 'AHCI' ? 'RAID / Intel RST' : 'AHCI'; });
+        bindToggle('b-fast', () => { biosCfg.fastBoot = !biosCfg.fastBoot; });
+        bindToggle('b-sec', () => { biosCfg.secureBoot = !biosCfg.secureBoot; });
+        bindToggle('b-tpm', () => { biosCfg.tpm2 = !biosCfg.tpm2; });
+
+        bootLayer.querySelectorAll('.b-ord').forEach(el => {
+          el.onclick = () => {
+            const i = +el.dataset.i;
+            const next = (i + 1) % biosCfg.bootOrder.length;
+            [biosCfg.bootOrder[i], biosCfg.bootOrder[next]] = [biosCfg.bootOrder[next], biosCfg.bootOrder[i]];
+            saveBios();
+            renderBios();
+          };
+        });
+
+        const doSaveBoot = () => { saveBios(); startPostSequence(); };
+        const doExitBoot = () => startOsLogoSplash('Normal');
+
+        const sBtn = document.getElementById('b-save-exit');
+        if (sBtn) sBtn.onclick = doSaveBoot;
+        const dBtn = document.getElementById('b-discard-exit');
+        if (dBtn) dBtn.onclick = doExitBoot;
+        const defBtn = document.getElementById('b-defaults');
+        if (defBtn) defBtn.onclick = () => {
+          biosCfg = {
+            bootOrder: ['NVMe SSD (CoreOS OS)', 'USB Flash (Puppy Linux Live)', 'PXE Network Boot (IPv4)'],
+            secureBoot: true, fastBoot: false, virtualization: true,
+            xmpProfile: 'DDR5-5600 XMP', sataMode: 'AHCI', tpm2: true
+          };
+          saveBios();
+          renderBios();
+        };
+
+        document.getElementById('uf-f10').onclick = doSaveBoot;
+        document.getElementById('uf-esc').onclick = doExitBoot;
+      }
+
+      renderBios();
+    }
+
+    // 3. F12 Boot Device Selection Menu
+    function openBootMenu() {
+      clearTimeout(bootTimer);
+      bootLayer.innerHTML = `
+        <div class="boot-os-splash">
+          <div style="width:min(440px,92vw);background:#0c1938;border:2px solid #38bdf8;border-radius:6px;padding:18px;font-family:Consolas,monospace;">
+            <div style="color:#facc15;font-weight:700;font-size:14px;border-bottom:1px solid #274485;padding-bottom:8px;margin-bottom:12px;">
+              Please select boot device (F12 Boot Menu):
+            </div>
+            ${biosCfg.bootOrder.map(dev => `
+              <div class="uefi-row bm-opt" data-dev="${dev}" style="cursor:pointer;">
+                <span>▶ ${dev}</span>
+                <span style="color:#38bdf8;font-size:11px;">[Enter]</span>
+              </div>
+            `).join('')}
+            <div class="uefi-row" id="bm-bios" style="cursor:pointer;margin-top:6px;">
+              <span style="color:#facc15;">⚙ Enter Setup (UEFI BIOS)</span>
+            </div>
+          </div>
+        </div>
+      `;
+      bootLayer.querySelectorAll('.bm-opt').forEach(el => {
+        el.onclick = () => startOsLogoSplash(el.dataset.dev);
+      });
+      document.getElementById('bm-bios').onclick = openBiosSetup;
+    }
+
+    // 4. F8 Advanced Startup / Safe Mode
+    function openF8Recovery() {
+      clearTimeout(bootTimer);
+      bootLayer.innerHTML = `
+        <div class="boot-os-splash">
+          <div style="width:min(470px,92vw);background:#0f172a;border:1px solid #38bdf8;border-radius:8px;padding:20px;">
+            <div style="font-size:16px;font-weight:700;color:#38bdf8;margin-bottom:6px;">Advanced Boot Options (F8)</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;">Diaqnostika və sistem bərpası üçün açılış rejimini seçin:</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn-primary" id="f8-safe" style="text-align:left;padding:10px;">1. Safe Mode (Təhlükəsiz Rejim — minimal drayverlər)</button>
+              <button class="btn-ghost" id="f8-net" style="text-align:left;padding:10px;">2. Safe Mode with Networking (Şəbəkə dəstəkli)</button>
+              <button class="btn-ghost" id="f8-norm" style="text-align:left;padding:10px;">3. Start CoreOS Normally (Standart açılış)</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('f8-safe').onclick = () => startOsLogoSplash('Safe Mode');
+      document.getElementById('f8-net').onclick = () => startOsLogoSplash('Safe Mode with Networking');
+      document.getElementById('f8-norm').onclick = () => startOsLogoSplash('Normal');
+    }
+
+    // Klaviatura düymələri (F1, F2, Delete, F8, F12, Escape)
+    window.addEventListener('keydown', (e) => {
+      if (bootLayer.style.display === 'none') return;
+      if (e.key === 'F1' || e.key === 'F2' || e.key === 'Delete') {
+        e.preventDefault();
+        openBiosSetup();
+      } else if (e.key === 'F12') {
+        e.preventDefault();
+        openBootMenu();
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        openF8Recovery();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        startOsLogoSplash('Normal');
+      }
+    });
+
+    // Sağ klik menyusuna "🔄 Yenidən Başlat (BIOS / Boot)" düyməsi əlavə edirik
+    setTimeout(() => {
+      const ctx = document.getElementById('ctx');
+      if (ctx) {
+        const d = document.createElement('div');
+        d.textContent = '🔄 Yenidən Başlat (POST / BIOS)';
+        d.onclick = () => startPostSequence();
+        ctx.appendChild(d);
+      }
+    }, 700);
+
+    // Səhifə açılan kimi real kompüter kimi POST -> Logo -> Kilid Ekranı ardıcıllığını başladırıq
+    startPostSequence();
+  })();
 </script>
 </html>
