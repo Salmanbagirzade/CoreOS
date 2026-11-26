@@ -3990,5 +3990,414 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       }
     }, 550);
   })();
+</script><script>
+  /* ===== CoreOS Paket 4: Kilid Ekranı, Şəbəkə Topologiyası, Yedək (JSON) & Xəta Simulyatoru ===== */
+  (function () {
+    const P4_KEY = 'coreos_pkg4_state_v1';
+    let p4 = {
+      fault: 'none', // 'none' | 'dns_down' | 'ip_conflict' | 'disk_full' | 'spooler_stop'
+      locked: false,
+      topoPingCount: 0,
+      lastBackup: 'Hələ alınmayıb'
+    };
+
+    try {
+      Object.assign(p4, JSON.parse(localStorage.getItem(P4_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveP4 = () => {
+      try { localStorage.setItem(P4_KEY, JSON.stringify(p4)); } catch (e) {}
+    };
+
+    // 1. Stil əlavə edirik (Kilid Ekranı + Şəbəkə Topologiyası)
+    const st = document.createElement('style');
+    st.textContent = `
+      #coreos-lock-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 48px 20px 36px;
+        background: radial-gradient(circle at top, rgba(30, 58, 138, 0.72), rgba(10, 14, 23, 0.94)), #0b0f17;
+        backdrop-filter: blur(18px);
+        color: #f8fafc;
+        text-align: center;
+        user-select: none;
+      }
+      #coreos-lock-screen.active { display: flex; }
+      .cls-clock { font-size: clamp(46px, 8vw, 84px); font-weight: 700; letter-spacing: 2px; line-height: 1.05; }
+      .cls-date { font-size: 16px; color: #cbd5e1; margin-top: 6px; }
+      .cls-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 18px 24px;
+        min-width: min(340px, 90vw);
+      }
+      .topo-stage {
+        position: relative;
+        height: 220px;
+        background: #101520;
+        border: 1px solid #293348;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+      .topo-node {
+        position: absolute;
+        background: #1e2636;
+        border: 1px solid #3b4963;
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 11.5px;
+        text-align: center;
+        transform: translate(-50%, -50%);
+        min-width: 92px;
+      }
+      .topo-node.err { border-color: #ef4444; background: rgba(239, 68, 68, 0.16); }
+      .topo-line {
+        position: absolute;
+        height: 2px;
+        background: #38bdf8;
+        transform-origin: 0 50%;
+        opacity: 0.55;
+      }
+      .topo-line.err { background: #ef4444; }
+    `;
+    document.head.appendChild(st);
+
+    // 2. Kilid Ekranı (Lock Screen) yaradırıq
+    const lockEl = document.createElement('div');
+    lockEl.id = 'coreos-lock-screen';
+    lockEl.innerHTML = `
+      <div>
+        <div class="cls-clock" id="cls-time">10:42</div>
+        <div class="cls-date" id="cls-date">Cümə axşamı, 26 Noyabr 2026</div>
+      </div>
+      <div class="cls-card">
+        <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#2563eb);display:grid;place-items:center;margin:0 auto 10px;font-weight:700;font-size:18px;">SB</div>
+        <div style="font-weight:700;font-size:15px;">Salman Bağırzadə</div>
+        <div style="font-size:11.5px;color:#94a3b8;margin-bottom:12px;">Kşats-25/01 · Sistem Kilidlidir</div>
+        <button class="btn-primary" id="cls-unlock-btn" style="width:100%;padding:8px 14px;">🔓 Kilidi Aç (Daxil ol)</button>
+      </div>
+      <div style="font-size:11.5px;color:#94a3b8;">CoreOS Desktop · Şəbəkə və Sistem Diaqnostika Mühiti</div>
+    `;
+    document.body.appendChild(lockEl);
+
+    function syncLockClock() {
+      const now = new Date();
+      const t = document.getElementById('cls-time');
+      const d = document.getElementById('cls-date');
+      if (t) t.textContent = now.toTimeString().slice(0, 5);
+      if (d) d.textContent = now.toLocaleDateString('az-AZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    syncLockClock();
+    setInterval(syncLockClock, 1000);
+
+    window.coreosLock = function () {
+      p4.locked = true;
+      saveP4();
+      syncLockClock();
+      lockEl.classList.add('active');
+    };
+
+    window.coreosUnlock = function () {
+      p4.locked = false;
+      saveP4();
+      lockEl.classList.remove('active');
+      if (window.notify) notify('🔓 Xoş gəldin', 'CoreOS masaüstü aktivləşdirildi.');
+    };
+
+    document.getElementById('cls-unlock-btn').onclick = window.coreosUnlock;
+    if (p4.locked) lockEl.classList.add('active');
+
+    // Mövcud lockPc funksiyası varsa, ona da qoşuruq
+    const prevLockPc = window.lockPc;
+    window.lockPc = function () {
+      if (typeof prevLockPc === 'function') prevLockPc();
+      window.coreosLock();
+    };
+
+    // 3. Xəta Simulyasiyası məlumatları
+    const FAULTS = {
+      none: {
+        name: 'Xəta yoxdur (Normal rejim)',
+        symptom: 'Bütün şəbəkə və sistem servisləri normal işləyir.',
+        fixHint: 'Hər hansı xəta ssenarisi seçib diaqnostika və təmir addımlarını sınaya bilərsən.'
+      },
+      dns_down: {
+        name: 'DNS Cavab Vermir (DNS_PROBE_FINISHED_NXDOMAIN)',
+        symptom: 'Lokal IP var (192.168.1.105), lakin domen adları (google.com) IP-yə çevrilmir.',
+        fixHint: 'DNS serveri 8.8.8.8 / 1.1.1.1 olaraq dəyiş və ya xətanı aradan qaldır.'
+      },
+      ip_conflict: {
+        name: 'IP Ünvan Konflikti (192.168.1.105)',
+        symptom: 'Şəbəkədə başqa cihaz eyni IP ünvanından istifadə edir, paket itkisi yaranır.',
+        fixHint: 'IP ünvanını yenilə (DHCP / 192.168.1.142) və ya konflikti aradan qaldır.'
+      },
+      disk_full: {
+        name: 'Disk Sahəsi Dolub (C:\\ NVMe SSD 99%)',
+        symptom: 'Müvəqqəti fayllar və keş səbəbindən sistem diski dolmaq üzrədir.',
+        fixHint: 'Zibil qutusunu təmizlə və disk xətasını aradan qaldır.'
+      },
+      spooler_stop: {
+        name: 'Print Spooler / Diaqnostika Servisi Dayanlb',
+        symptom: 'Arxa plan servisi dayandığı üçün çap və diaqnostika növbəsi gözləyir.',
+        fixHint: 'Servisi yenidən başlat və ya xətanı düzəlt.'
+      }
+    };
+
+    // 4. Proqram A: Şəbəkə Topologiyası & Paket Simulyatoru
+    window.mkApp(
+      'nettopo',
+      '🕸️',
+      'Şəbəkə Topo',
+      'Şəbəkə Topologiyası və Paket Simulyatoru',
+      740,
+      500,
+      `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div>
+            <b style="color:#38bdf8;">Lokal Şəbəkə Topologiyası (192.168.1.0/24)</b>
+            <div style="font-size:11.5px;color:#94a3b8;">Aktiv xəta rejimi: <b id="nt-fault-lbl" style="color:#facc15;">-</b></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-primary" id="nt-ping-gw">📡 Ping Router (192.168.1.1)</button>
+            <button class="btn-ghost" id="nt-ping-dns">🌍 Ping DNS (8.8.8.8)</button>
+          </div>
+        </div>
+
+        <div class="topo-stage" id="nt-stage">
+          <div class="topo-line" id="ln-1" style="left:18%;top:110px;width:27%;"></div>
+          <div class="topo-line" id="ln-2" style="left:45%;top:110px;width:27%;"></div>
+          <div class="topo-line" id="ln-3" style="left:72%;top:110px;width:16%;"></div>
+
+          <div class="topo-node" id="nd-pc" style="left:18%;top:110px;">
+            <div>💻 <b>PC-01</b></div>
+            <div style="font-size:10px;color:#94a3b8;">192.168.1.105</div>
+          </div>
+          <div class="topo-node" id="nd-sw" style="left:45%;top:110px;">
+            <div>🔀 <b>Switch-L2</b></div>
+            <div style="font-size:10px;color:#94a3b8;">VLAN 10 · 1Gbps</div>
+          </div>
+          <div class="topo-node" id="nd-rt" style="left:72%;top:110px;">
+            <div>📡 <b>Router</b></div>
+            <div style="font-size:10px;color:#94a3b8;">192.168.1.1</div>
+          </div>
+          <div class="topo-node" id="nd-wan" style="left:88%;top:110px;">
+            <div>🌐 <b>DNS/WAN</b></div>
+            <div style="font-size:10px;color:#94a3b8;">8.8.8.8</div>
+          </div>
+        </div>
+
+        <div id="nt-log" style="margin-top:10px;font-family:Consolas,monospace;font-size:11.5px;background:#101520;border:1px solid #283247;border-radius:6px;padding:9px;height:105px;overflow-y:auto;color:#cbd5e1;line-height:1.5;">
+          [Hazır] Ping göndərmək üçün yuxarıdakı düymələrdən birini seçin.
+        </div>
+      `,
+      () => {
+        const logEl = document.getElementById('nt-log');
+        const fLbl = document.getElementById('nt-fault-lbl');
+        const ndPc = document.getElementById('nd-pc');
+        const ndSw = document.getElementById('nd-sw');
+        const ndRt = document.getElementById('nd-rt');
+        const ndWan = document.getElementById('nd-wan');
+        const ln3 = document.getElementById('ln-3');
+
+        function refreshTopoState() {
+          fLbl.textContent = FAULTS[p4.fault]?.name || 'Normal';
+          [ndPc, ndSw, ndRt, ndWan, ln3].forEach(el => el && el.classList.remove('err'));
+          if (p4.fault === 'ip_conflict') {
+            ndPc.classList.add('err');
+          } else if (p4.fault === 'dns_down') {
+            ndWan.classList.add('err');
+            ln3.classList.add('err');
+          }
+        }
+        refreshTopoState();
+
+        function writeLog(msg, color = '#cbd5e1') {
+          const line = document.createElement('div');
+          line.style.color = color;
+          line.textContent = `[${new Date().toTimeString().slice(0, 8)}] ${msg}`;
+          logEl.prepend(line);
+        }
+
+        document.getElementById('nt-ping-gw').onclick = () => {
+          p4.topoPingCount++;
+          saveP4();
+          if (p4.fault === 'ip_conflict') {
+            writeLog('Reply from 192.168.1.105: Duplicate IP address detected! Packet loss: 50%', '#f87171');
+          } else {
+            writeLog('Reply from 192.168.1.1: bytes=32 time=2ms TTL=64 (Switch-L2 → Router OK)', '#4ade80');
+          }
+        };
+
+        document.getElementById('nt-ping-dns').onclick = () => {
+          p4.topoPingCount++;
+          saveP4();
+          if (p4.fault === 'dns_down') {
+            writeLog('PING 8.8.8.8: Request timed out. DNS resolution / upstream unreachable!', '#f87171');
+          } else if (p4.fault === 'ip_conflict') {
+            writeLog('PING 8.8.8.8: Transmit failed. IP conflict on local interface.', '#f87171');
+          } else {
+            writeLog('Reply from 8.8.8.8: bytes=32 time=14ms TTL=117 (End-to-end path healthy)', '#38bdf8');
+          }
+        };
+      }
+    );
+
+    // 5. Proqram B: Xəta Simulyasiyası & Diaqnostika Laboratoriyası
+    window.mkApp(
+      'faultlab',
+      '🚨',
+      'Xəta Lab',
+      'Sistem və Şəbəkə Xəta Simulyatoru',
+      680,
+      460,
+      `
+        <div class="card">
+          <b style="color:#38bdf8;">Xəta Ssenarisi Seç və Sına</b>
+          <p style="font-size:11.5px;color:#94a3b8;margin:4px 0 10px;">
+            Real xəta yaradın, Şəbəkə Topologiyası və ya CMD-də yoxlayın, sonra bir kliklə bərpa edin.
+          </p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn-ghost fl-set" data-f="dns_down">🌐 DNS Xətası</button>
+            <button class="btn-ghost fl-set" data-f="ip_conflict">⚠️ IP Konflikti</button>
+            <button class="btn-ghost fl-set" data-f="disk_full">💾 Disk Dolması</button>
+            <button class="btn-ghost fl-set" data-f="spooler_stop">🖨️ Servis Dayanması</button>
+            <button class="btn-primary" id="fl-fix">✅ Xətanı Aradan Qaldır</button>
+          </div>
+        </div>
+        <div class="card" id="fl-detail"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-ghost" onclick="openWin('nettopo')">🕸️ Şəbəkə Topologiyasını Aç</button>
+          <button class="btn-ghost" onclick="openWin('cmd')">⬛ CMD Aç</button>
+        </div>
+      `,
+      () => {
+        const det = document.getElementById('fl-detail');
+        function renderFault() {
+          const cur = FAULTS[p4.fault] || FAULTS.none;
+          const isErr = p4.fault !== 'none';
+          det.innerHTML = `
+            <div style="font-size:13px;font-weight:700;color:${isErr ? '#f87171' : '#4ade80'};">${cur.name}</div>
+            <div style="margin-top:6px;font-size:12px;"><b>Əlamət:</b> ${cur.symptom}</div>
+            <div style="margin-top:4px;font-size:12px;color:#cbd5e1;"><b>Diaqnostika / Həll:</b> ${cur.fixHint}</div>
+          `;
+        }
+        renderFault();
+
+        document.querySelectorAll('.fl-set').forEach(b => {
+          b.onclick = () => {
+            p4.fault = b.dataset.f;
+            saveP4();
+            renderFault();
+            if (window.notify) notify('🚨 Xəta Aktivləşdi', FAULTS[p4.fault].name);
+          };
+        });
+
+        document.getElementById('fl-fix').onclick = () => {
+          p4.fault = 'none';
+          saveP4();
+          renderFault();
+          if (window.notify) notify('✅ Bərpa Edildi', 'Sistem normal vəziyyətə qaytarıldı.');
+        };
+      }
+    );
+
+    // 6. Proqram C: Tam Sistem Yedəyi (JSON Export / Import)
+    window.mkApp(
+      'backupmgr',
+      '💾',
+      'Yedək (JSON)',
+      'CoreOS Sistem Yedəyi — Export & Import',
+      640,
+      430,
+      `
+        <div class="card">
+          <b style="color:#38bdf8;">Bütün Parametrlərin və Məlumatların Yedəyi</b>
+          <p style="font-size:11.5px;color:#94a3b8;margin:4px 0 10px;">
+            İkon düzülüşü, qovluqlar, Zibil Qutusu, Start menyu, My CoreOS və Settings ayarlarını <b>.json</b> faylı kimi yükləyin və ya geri qaytarın.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-primary" id="bk-export">⬇️ Yedəyi Yüklə (.json)</button>
+            <button class="btn-ghost" id="bk-import-btn">⬆️ Yedəkdən Geri Yüklə</button>
+            <input type="file" id="bk-file" accept=".json,application/json" style="display:none;">
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:#94a3b8;">
+            Son yedək əməliyyatı: <b id="bk-last" style="color:#4ade80;">${p4.lastBackup}</b>
+          </div>
+        </div>
+        <div class="card">
+          <b style="color:#38bdf8;">Yedək Məzmununa Baxış (JSON)</b>
+          <textarea id="bk-preview" class="inp" style="width:100%;height:145px;margin-top:8px;font-family:Consolas,monospace;font-size:11px;" readonly></textarea>
+        </div>
+      `,
+      () => {
+        const prev = document.getElementById('bk-preview');
+        const lastEl = document.getElementById('bk-last');
+
+        function collectAllState() {
+          const dump = {};
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            dump[k] = localStorage.getItem(k);
+          }
+          return dump;
+        }
+
+        prev.value = JSON.stringify(collectAllState(), null, 2);
+
+        document.getElementById('bk-export').onclick = () => {
+          const blob = new Blob([JSON.stringify(collectAllState(), null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'coreos-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+          a.click();
+          URL.revokeObjectURL(url);
+          p4.lastBackup = 'Yükləndi (' + new Date().toTimeString().slice(0, 5) + ')';
+          saveP4();
+          lastEl.textContent = p4.lastBackup;
+          if (window.notify) notify('💾 Yedək Hazırdır', 'coreos-backup.json faylı endirildi.');
+        };
+
+        const fileInp = document.getElementById('bk-file');
+        document.getElementById('bk-import-btn').onclick = () => fileInp.click();
+        fileInp.onchange = () => {
+          const file = fileInp.files && fileInp.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const parsed = JSON.parse(reader.result);
+              Object.keys(parsed).forEach(k => localStorage.setItem(k, parsed[k]));
+              p4.lastBackup = 'Bərpa edildi (' + new Date().toTimeString().slice(0, 5) + ')';
+              saveP4();
+              if (window.notify) notify('⬆️ Bərpa Edildi', 'Yedək yükləndi, səhifə yenilənir...');
+              setTimeout(() => location.reload(), 600);
+            } catch (err) {
+              alert('Yanlış JSON yedək faylı!');
+            }
+          };
+          reader.readAsText(file);
+        };
+      }
+    );
+
+    // Sağ klik menyusuna "🔒 Ekranı kilidlə" düyməsi əlavə edirik
+    setTimeout(() => {
+      const ctx = document.getElementById('ctx');
+      if (ctx) {
+        const d = document.createElement('div');
+        d.textContent = '🔒 Ekranı kilidlə';
+        d.onclick = () => window.coreosLock();
+        ctx.appendChild(d);
+      }
+    }, 650);
+  })();
 </script>
 </html>
