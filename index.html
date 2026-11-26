@@ -5193,5 +5193,270 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       }
     }, true);
   })();
+</script><script>
+  /* ===== CoreOS Start Menu Power Seçimləri: Yuxu (Sleep), Yenidən Başlat (Restart), Söndür (Shut Down) ===== */
+  (function () {
+    const startEl = document.getElementById('win-start');
+    if (!startEl) return;
+
+    // 1. Stil (Start alt zolağı + Yuxu və Söndürülmüş ekranlar)
+    const st = document.createElement('style');
+    st.textContent = `
+      .st-power-footer {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #2e3543;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        position: relative;
+      }
+      .st-pwr-trigger {
+        background: #242b38;
+        border: 1px solid #384357;
+        color: #f8fafc;
+        border-radius: 7px;
+        padding: 6px 11px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .st-pwr-trigger:hover { background: #2f3849; border-color: #38bdf8; }
+      .st-pwr-menu {
+        position: absolute;
+        right: 0;
+        bottom: 42px;
+        width: 195px;
+        background: #1a202c;
+        border: 1px solid #384357;
+        border-radius: 9px;
+        padding: 5px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65);
+        display: none;
+        flex-direction: column;
+        gap: 3px;
+        z-index: 60;
+      }
+      .st-pwr-menu.open { display: flex; }
+      .st-pwr-opt {
+        border: none;
+        background: transparent;
+        color: #e2e8f0;
+        padding: 8px 10px;
+        border-radius: 6px;
+        text-align: left;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .st-pwr-opt:hover { background: rgba(56, 189, 248, 0.16); color: #fff; }
+      .st-pwr-opt.danger:hover { background: rgba(239, 68, 68, 0.22); color: #fca5a5; }
+
+      /* Yuxu (Sleep) və Söndürülmüş (Shut down) Ekranları */
+      #coreos-power-state {
+        position: fixed;
+        inset: 0;
+        z-index: 2500;
+        background: #000000;
+        color: #e2e8f0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        text-align: center;
+        user-select: none;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+      #coreos-power-state.active { display: flex; }
+      .pwr-wake-btn {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        border: 2px solid #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        font-size: 28px;
+        cursor: pointer;
+        box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+        transition: transform 0.15s, background 0.15s;
+      }
+      .pwr-wake-btn:hover {
+        transform: scale(1.07);
+        background: rgba(56, 189, 248, 0.25);
+      }
+    `;
+    document.head.appendChild(st);
+
+    // 2. Tam Ekran Power Overlay (Söndürülür... / Yuxu Rejimi / Qapalı Kompüter)
+    const pwrOverlay = document.createElement('div');
+    pwrOverlay.id = 'coreos-power-state';
+    document.body.appendChild(pwrOverlay);
+
+    function playShutdownTone() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        [587.33, 493.88, 392.00, 293.66].forEach((freq, i) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, now + i * 0.12);
+          g.gain.setValueAtTime(0.04, now + i * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.6);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now + i * 0.12);
+          o.stop(now + i * 0.12 + 0.65);
+        });
+      } catch (e) {}
+    }
+
+    function closeStartMenu() {
+      if (typeof window.toggleStart === 'function') {
+        window.toggleStart(false);
+      } else {
+        startEl.style.display = 'none';
+      }
+    }
+
+    // Yuxu rejimi (Sleep)
+    window.coreosSleep = function () {
+      closeStartMenu();
+      pwrOverlay.classList.add('active');
+      pwrOverlay.innerHTML = `
+        <div class="win11-spinner"></div>
+        <div style="font-size:16px;color:#cbd5e1;">Yuxu rejiminə keçilir (Sleep)...</div>
+      `;
+
+      setTimeout(() => {
+        pwrOverlay.innerHTML = `
+          <div style="font-size:13px;color:#64748b;letter-spacing:1px;">💤 SİSTEM YUXU REJİMİNDƏDİR (SLEEP)</div>
+          <div style="font-size:12px;color:#475569;">Açıq proqramlar RAM yaddaşında saxlanılıb</div>
+          <button class="pwr-wake-btn" id="pwr-wake-sleep" title="Oyandır">⚡</button>
+          <div style="font-size:11.5px;color:#94a3b8;">Oyandırmaq üçün düyməyə klikləyin və ya klaviaturada hər hansı düymə basın</div>
+        `;
+        const wakeUp = () => {
+          window.removeEventListener('keydown', wakeUp);
+          pwrOverlay.classList.remove('active');
+          if (typeof window.coreosLock === 'function') window.coreosLock();
+          if (window.notify) notify('⚡ Sistem Oyandı', 'Yuxu rejimindən bərpa edildi.');
+        };
+        document.getElementById('pwr-wake-sleep').onclick = wakeUp;
+        window.addEventListener('keydown', wakeUp, { once: true });
+      }, 1100);
+    };
+
+    // Yenidən başlat (Restart -> POST / BIOS / Logo)
+    window.coreosRestart = function () {
+      closeStartMenu();
+      playShutdownTone();
+      pwrOverlay.classList.add('active');
+      pwrOverlay.innerHTML = `
+        <div class="win11-spinner"></div>
+        <div style="font-size:17px;color:#f8fafc;">Yenidən başladılır (Restarting)...</div>
+      `;
+
+      setTimeout(() => {
+        pwrOverlay.classList.remove('active');
+        // Sağ klik menyusundakı POST/BIOS restart düyməsini işə salırıq
+        const postItem = [...document.querySelectorAll('#ctx div')].find(d => d.textContent.includes('POST / BIOS'));
+        if (postItem) {
+          postItem.click();
+        } else {
+          location.reload();
+        }
+      }, 1500);
+    };
+
+    // Söndür (Shut Down -> Qara ekran + Power düyməsi)
+    window.coreosShutdown = function () {
+      closeStartMenu();
+      playShutdownTone();
+      pwrOverlay.classList.add('active');
+      pwrOverlay.innerHTML = `
+        <div class="win11-spinner"></div>
+        <div style="font-size:17px;color:#f8fafc;">Sistem söndürülür (Shutting down)...</div>
+      `;
+
+      setTimeout(() => {
+        pwrOverlay.innerHTML = `
+          <div style="font-size:13px;color:#475569;letter-spacing:1.5px;">KOMPÜTER SÖNDÜRÜLÜB (POWER OFF)</div>
+          <button class="pwr-wake-btn" id="pwr-turn-on" title="Kompüteri Yandır">⏻</button>
+          <div style="font-size:12px;color:#64748b;">Kompüteri yenidən yandırmaq üçün <b>Power (⏻)</b> düyməsinə basın</div>
+        `;
+        document.getElementById('pwr-turn-on').onclick = () => {
+          pwrOverlay.classList.remove('active');
+          const postItem = [...document.querySelectorAll('#ctx div')].find(d => d.textContent.includes('POST / BIOS'));
+          if (postItem) {
+            postItem.click();
+          } else {
+            location.reload();
+          }
+        };
+      }, 1700);
+    };
+
+    // 3. Start menyunun ən altına İstifadəçi + Güc (Power) menyusunu yerləşdiririk
+    const footer = document.createElement('div');
+    footer.className = 'st-power-footer';
+    footer.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#2563eb);display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff;">SB</div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#f1f5f9;">Salman Bağırzadə</div>
+          <div style="font-size:10px;color:#94a3b8;">Kşats-25/01</div>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <div class="st-pwr-menu" id="st-pwr-menu">
+          <button class="st-pwr-opt" id="st-act-lock">🔒 Kilidlə (Lock)</button>
+          <button class="st-pwr-opt" id="st-act-sleep">🌙 Yuxu (Sleep)</button>
+          <button class="st-pwr-opt" id="st-act-restart">🔄 Yenidən başlat</button>
+          <button class="st-pwr-opt danger" id="st-act-shutdown">⏻ Söndür (Shut down)</button>
+        </div>
+        <button class="st-pwr-trigger" id="st-pwr-btn" title="Güc seçimləri">
+          <span>⏻</span> <span>Güc</span>
+        </button>
+      </div>
+    `;
+    startEl.appendChild(footer);
+
+    const menuEl = document.getElementById('st-pwr-menu');
+    const pwrBtn = document.getElementById('st-pwr-btn');
+
+    pwrBtn.onclick = (e) => {
+      e.stopPropagation();
+      menuEl.classList.toggle('open');
+    };
+
+    document.addEventListener('click', (e) => {
+      if (!footer.contains(e.target)) menuEl.classList.remove('open');
+    });
+
+    document.getElementById('st-act-lock').onclick = () => {
+      menuEl.classList.remove('open');
+      closeStartMenu();
+      if (typeof window.coreosLock === 'function') window.coreosLock();
+    };
+    document.getElementById('st-act-sleep').onclick = () => {
+      menuEl.classList.remove('open');
+      window.coreosSleep();
+    };
+    document.getElementById('st-act-restart').onclick = () => {
+      menuEl.classList.remove('open');
+      window.coreosRestart();
+    };
+    document.getElementById('st-act-shutdown').onclick = () => {
+      menuEl.classList.remove('open');
+      window.coreosShutdown();
+    };
+  })();
 </script>
 </html>
