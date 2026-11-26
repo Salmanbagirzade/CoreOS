@@ -3600,5 +3600,395 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
     applySideEffects();
     renderContent();
   })();
+</script><script>
+  /* ===== CoreOS Masaüstü Qovluqlar, İkon Gizlətmə & Saat/Hava Vidceti ===== */
+  (function () {
+    const desk = document.querySelector('.desktop-icons');
+    if (!desk) return;
+
+    const D_KEY = 'coreos_desk_organize_v1';
+    let state = {
+      folders: {}, // { "Sistem Alətləri": ["CMD", "Task Manager"] }
+      hidden: [],  // ["Snake", ...]
+      widgetPos: { x: Math.max(20, window.innerWidth - 310), y: 24 },
+      showWidget: true
+    };
+
+    try {
+      Object.assign(state, JSON.parse(localStorage.getItem(D_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveState = () => {
+      try { localStorage.setItem(D_KEY, JSON.stringify(state)); } catch (e) {}
+    };
+
+    // 1. Stil əlavə edirik (Vidcet + Qovluq pəncərəsi + Sağ klik alt menyusu)
+    const st = document.createElement('style');
+    st.textContent = `
+      #coreos-desk-widget {
+        position: fixed;
+        z-index: 12;
+        width: 265px;
+        background: rgba(18, 24, 38, 0.68);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        padding: 14px 16px;
+        color: #f8fafc;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+      #coreos-desk-widget:active { cursor: grabbing; }
+      .cw-time {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        line-height: 1.1;
+        background: linear-gradient(90deg, #ffffff, #7dd3fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .cw-date {
+        font-size: 11.5px;
+        color: #cbd5e1;
+        margin-top: 3px;
+      }
+      .cw-weather {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .cw-temp {
+        font-size: 20px;
+        font-weight: 700;
+        color: #38bdf8;
+      }
+      #coreos-folder-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 95;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        place-items: center;
+      }
+      .cfm-box {
+        width: min(460px, 92vw);
+        background: #1c212c;
+        border: 1px solid #333d52;
+        border-radius: 10px;
+        padding: 14px;
+        color: #f1f5f9;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+      }
+      .cfm-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+        max-height: 280px;
+        overflow-y: auto;
+      }
+      .cfm-item {
+        background: #252c3b;
+        border: 1px solid #343e54;
+        border-radius: 7px;
+        padding: 8px 4px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+      }
+      .cfm-item:hover { background: #2f384b; border-color: #38bdf8; }
+      .cfm-out {
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        background: transparent;
+        border: none;
+        color: #f87171;
+        font-size: 11px;
+        cursor: pointer;
+      }
+    `;
+    document.head.appendChild(st);
+
+    // 2. Masaüstü Saat & Hava Vidceti (Bakı, Azərbaycan)
+    const widget = document.createElement('div');
+    widget.id = 'coreos-desk-widget';
+    widget.style.left = state.widgetPos.x + 'px';
+    widget.style.top = state.widgetPos.y + 'px';
+    widget.style.display = state.showWidget ? 'block' : 'none';
+    widget.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="cw-time" id="cw-clock">10:33</div>
+          <div class="cw-date" id="cw-date">Cümə axşamı, 26 Noyabr</div>
+        </div>
+        <button id="cw-hide-btn" title="Vidceti gizlət" style="background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:12px;">✕</button>
+      </div>
+      <div class="cw-weather">
+        <div>
+          <div style="font-size:12px;font-weight:600;">📍 Bakı, Maştağa</div>
+          <div id="cw-desc" style="font-size:11px;color:#94a3b8;">Açıq · Külək 14 km/s</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cw-temp" id="cw-temp">☀️ 13°C</div>
+          <div style="font-size:10px;color:#94a3b8;">Rütubət: 64%</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(widget);
+
+    // Canlı saat yenilənməsi
+    const AZ_DAYS = ['Bazar', 'Bazar ertəsi', 'Çərşənbə axşamı', 'Çərşənbə', 'Cümə axşamı', 'Cümə', 'Şənbə'];
+    const AZ_MONTHS = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun', 'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
+
+    function tickWidget() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const cEl = document.getElementById('cw-clock');
+      const dEl = document.getElementById('cw-date');
+      if (cEl) cEl.innerHTML = `${hh}:${mm}<span style="font-size:15px;opacity:0.75;">:${ss}</span>`;
+      if (dEl) dEl.textContent = `${AZ_DAYS[now.getDay()]}, ${now.getDate()} ${AZ_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+    }
+    tickWidget();
+    setInterval(tickWidget, 1000);
+
+    // Canlı hava məlumatı (Open-Meteo pulsuz API — Bakı koordinatları, internet varsa yeniləyir)
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=40.52&longitude=50.00&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code')
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.current) return;
+        const t = Math.round(data.current.temperature_2m);
+        const w = Math.round(data.current.wind_speed_10m);
+        const h = data.current.relative_humidity_2m;
+        const code = data.current.weather_code;
+        const icon = code === 0 ? '☀️' : code < 4 ? '⛅' : code < 70 ? '🌧️' : '❄️';
+        const desc = code === 0 ? 'Açıq səma' : code < 4 ? 'Az buludlu' : code < 70 ? 'Yağışlı' : 'Soyuq';
+        document.getElementById('cw-temp').textContent = `${icon} ${t}°C`;
+        document.getElementById('cw-desc').textContent = `${desc} · Külək ${w} km/s · Rütubət ${h}%`;
+      })
+      .catch(() => {});
+
+    // Vidceti ekranda istədiyin yerə sürükləmə
+    let wDrag = false, wx = 0, wy = 0, wox = 0, woy = 0;
+    widget.addEventListener('pointerdown', e => {
+      if (e.target.id === 'cw-hide-btn') return;
+      wDrag = true;
+      wx = e.clientX; wy = e.clientY;
+      wox = parseFloat(widget.style.left) || 0;
+      woy = parseFloat(widget.style.top) || 0;
+      widget.setPointerCapture(e.pointerId);
+    });
+    widget.addEventListener('pointermove', e => {
+      if (!wDrag) return;
+      const nx = Math.max(8, Math.min(window.innerWidth - widget.offsetWidth - 8, wox + (e.clientX - wx)));
+      const ny = Math.max(8, Math.min(window.innerHeight - widget.offsetHeight - 56, woy + (e.clientY - wy)));
+      widget.style.left = nx + 'px';
+      widget.style.top = ny + 'px';
+    });
+    widget.addEventListener('pointerup', e => {
+      if (!wDrag) return;
+      wDrag = false;
+      widget.releasePointerCapture(e.pointerId);
+      state.widgetPos = { x: parseFloat(widget.style.left), y: parseFloat(widget.style.top) };
+      saveState();
+    });
+
+    document.getElementById('cw-hide-btn').onclick = () => {
+      state.showWidget = false;
+      widget.style.display = 'none';
+      saveState();
+      if (window.notify) notify('🧩 Vidcet gizlədildi', 'Masaüstündə sağ klik edib yenidən aça bilərsən.');
+    };
+
+    // 3. Qovluq pəncərəsi (Modal)
+    const modal = document.createElement('div');
+    modal.id = 'coreos-folder-modal';
+    modal.innerHTML = `
+      <div class="cfm-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b id="cfm-title" style="font-size:14px;color:#38bdf8;">📁 Qovluq</b>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-ghost" id="cfm-del-folder" style="color:#f87171;font-size:11px;">Qovluğu sil</button>
+            <button class="btn-ghost" id="cfm-close" style="font-size:11px;">✕</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Proqramı açmaq üçün kliklə, masaüstünə qaytarmaq üçün <b>✕</b> bas.</div>
+        <div class="cfm-grid" id="cfm-grid"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('cfm-close').onclick = () => { modal.style.display = 'none'; };
+    modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    function openDesktopFolder(folderName) {
+      const appsInFolder = state.folders[folderName] || [];
+      document.getElementById('cfm-title').textContent = '📁 ' + folderName;
+      const grid = document.getElementById('cfm-grid');
+      grid.innerHTML = '';
+
+      if (!appsInFolder.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:18px;font-size:12px;">Bu qovluq boşdur. Sağ klik menyusundan proqram əlavə edə bilərsən.</div>`;
+      } else {
+        appsInFolder.forEach(appLabel => {
+          const origIcon = [...desk.querySelectorAll('.win-icon')].find(el => getIconName(el) === appLabel);
+          const glyph = origIcon?.querySelector('.win-icon-glyph')?.textContent || '📦';
+          const card = document.createElement('div');
+          card.className = 'cfm-item';
+          card.innerHTML = `
+            <button class="cfm-out" title="Masaüstünə çıxar">✕</button>
+            <div style="font-size:24px;">${glyph}</div>
+            <div style="font-size:11px;margin-top:4px;word-break:break-word;">${appLabel}</div>
+          `;
+          card.onclick = e => {
+            if (e.target.classList.contains('cfm-out')) {
+              state.folders[folderName] = state.folders[folderName].filter(x => x !== appLabel);
+              saveState();
+              applyDeskRules();
+              openDesktopFolder(folderName);
+              return;
+            }
+            modal.style.display = 'none';
+            if (origIcon) origIcon.click();
+          };
+          grid.appendChild(card);
+        });
+      }
+
+      document.getElementById('cfm-del-folder').onclick = () => {
+        delete state.folders[folderName];
+        saveState();
+        modal.style.display = 'none';
+        applyDeskRules();
+      };
+
+      modal.style.display = 'grid';
+    }
+
+    function getIconName(el) {
+      return el.querySelector('.win-icon-label')?.textContent.trim() || '';
+    }
+
+    // 4. Qovluqları render etmək və gizli/qovluqdakı ikonları masaüstündən yığışdırmaq
+    function applyDeskRules() {
+      // Köhnə qovluq ikonlarını təmizləyib yenidən çəkirik
+      desk.querySelectorAll('.coreos-folder-icon').forEach(el => el.remove());
+
+      const inAnyFolder = new Set(Object.values(state.folders).flat());
+      const hiddenSet = new Set(state.hidden);
+
+      desk.querySelectorAll('.win-icon:not(.coreos-folder-icon)').forEach(icon => {
+        const name = getIconName(icon);
+        if (inAnyFolder.has(name) || hiddenSet.has(name)) {
+          icon.style.display = 'none';
+        } else {
+          icon.style.display = 'flex';
+        }
+      });
+
+      let savedPos = {};
+      try { savedPos = JSON.parse(localStorage.getItem('coreos_icon_pos') || '{}'); } catch (e) {}
+
+      Object.keys(state.folders).forEach((fName, idx) => {
+        const fIcon = document.createElement('div');
+        fIcon.className = 'win-icon coreos-folder-icon';
+        fIcon.innerHTML = `
+          <div class="win-icon-glyph">📁</div>
+          <div class="win-icon-label">${fName}</div>
+        `;
+        const pos = savedPos[fName] || { x: 190, y: idx * 92 };
+        fIcon.style.left = pos.x + 'px';
+        fIcon.style.top = pos.y + 'px';
+        fIcon.onclick = () => openDesktopFolder(fName);
+        desk.appendChild(fIcon);
+      });
+    }
+
+    // 5. Sağ klik menyusuna Qovluq yaratma, İkon idarəsi və Vidcet düymələri əlavə edirik
+    setTimeout(() => {
+      applyDeskRules();
+
+      const ctx = document.getElementById('ctx');
+      if (ctx) {
+        const addMenu = (label, fn) => {
+          const d = document.createElement('div');
+          d.textContent = label;
+          d.onclick = fn;
+          ctx.appendChild(d);
+        };
+
+        addMenu('📁 Yeni qovluq yarat', () => {
+          const name = prompt('Qovluğun adını yazın (məs: Sistem Alətləri, Oyunlar):');
+          if (!name || !name.trim()) return;
+          const clean = name.trim();
+          if (!state.folders[clean]) state.folders[clean] = [];
+          saveState();
+          applyDeskRules();
+          if (window.notify) notify('📁 Qovluq yaradıldı', `"${clean}" masaüstünə əlavə olundu.`);
+        });
+
+        addMenu('📂 Proqramı qovluğa at', () => {
+          const folderNames = Object.keys(state.folders);
+          if (!folderNames.length) {
+            alert('Əvvəlcə sağ klik edib "📁 Yeni qovluq yarat" seçin.');
+            return;
+          }
+          const visibleApps = [...desk.querySelectorAll('.win-icon:not(.coreos-folder-icon)')]
+            .filter(el => el.style.display !== 'none')
+            .map(getIconName);
+          const appName = prompt('Hansı proqramı qovluğa atmaq istəyirsiniz?\n\nMövcud proqramlar:\n' + visibleApps.join(', '));
+          if (!appName) return;
+          const matched = visibleApps.find(a => a.toLowerCase() === appName.trim().toLowerCase());
+          if (!matched) {
+            alert('Belə adlı proqram masaüstündə tapılmadı.');
+            return;
+          }
+          const targetFolder = folderNames.length === 1
+            ? folderNames[0]
+            : prompt('Hansı qovluğa atılsın?\n' + folderNames.join(', '));
+          if (!targetFolder || !state.folders[targetFolder.trim()]) return;
+          state.folders[targetFolder.trim()].push(matched);
+          saveState();
+          applyDeskRules();
+          if (window.notify) notify('📂 Köçürüldü', `"${matched}" → "${targetFolder.trim()}" qovluğuna atıldı.`);
+        });
+
+        addMenu('👁️ Masaüstü ikonlarını idarə et', () => {
+          const allApps = [...desk.querySelectorAll('.win-icon:not(.coreos-folder-icon)')].map(getIconName);
+          const target = prompt(
+            'Gizlətmək və ya geri qaytarmaq istədiyiniz proqramın adını yazın:\n\n' +
+            'Gizli olanlar: ' + (state.hidden.length ? state.hidden.join(', ') : 'Yoxdur') + '\n\n' +
+            'Bütün proqramlar: ' + allApps.join(', ')
+          );
+          if (!target) return;
+          const exact = allApps.find(a => a.toLowerCase() === target.trim().toLowerCase());
+          if (!exact) return;
+          if (state.hidden.includes(exact)) {
+            state.hidden = state.hidden.filter(x => x !== exact);
+            if (window.notify) notify('👁️ Göstərildi', `"${exact}" masaüstünə qaytarıldı.`);
+          } else {
+            state.hidden.push(exact);
+            if (window.notify) notify('🙈 Gizlədildi', `"${exact}" masaüstündən çıxarıldı (Start menyuda qalır).`);
+          }
+          saveState();
+          applyDeskRules();
+        });
+
+        addMenu('🕒 Saat & Hava vidcetini göstər/gizlət', () => {
+          state.showWidget = !state.showWidget;
+          widget.style.display = state.showWidget ? 'block' : 'none';
+          saveState();
+        });
+      }
+    }, 550);
+  })();
 </script>
 </html>
