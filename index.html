@@ -2219,5 +2219,170 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
     window.addEventListener('resize', layoutIcons);
   })();
 </script>
-</body>
+</body><script>
+  /* ===== CoreOS Zibil Qutusu (Recycle Bin) ===== */
+  (function () {
+    const STORAGE_KEY = 'coreos_recycle_bin_v1';
+    let binItems = [];
+
+    try {
+      binItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    } catch (e) {
+      binItems = [];
+    }
+
+    function saveBin() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(binItems));
+      } catch (e) {}
+      updateBinBadge();
+    }
+
+    function updateBinBadge() {
+      const el = document.getElementById('rb-count');
+      if (el) el.textContent = binItems.length;
+    }
+
+    window.moveToRecycleBin = function (item) {
+      binItems.unshift({
+        id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        type: item.type || 'Fayl',
+        name: item.name || 'Adsız element',
+        content: item.content ?? null,
+        deletedAt: new Date().toLocaleTimeString().slice(0, 5)
+      });
+      saveBin();
+      renderRecycleBin();
+      if (window.notify) notify('🗑️ Zibil Qutusuna atıldı', `"${item.name}" zibil qutusuna göndərildi.`);
+    };
+
+    window.renderRecycleBin = function () {
+      const list = document.getElementById('rb-list');
+      updateBinBadge();
+      if (!list) return;
+
+      if (!binItems.length) {
+        list.innerHTML = `<div class="card" style="text-align:center;color:#94a3b8;padding:24px;">🗑️ Zibil qutusu boşdur.</div>`;
+        return;
+      }
+
+      list.innerHTML = binItems.map((it, idx) => `
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+          <div>
+            <div style="font-weight:600;font-size:13px;">${it.type === 'Qovluq' ? '📁' : '📄'} ${it.name}</div>
+            <div style="font-size:11px;color:#94a3b8;">Növ: ${it.type} · Silinmə vaxtı: ${it.deletedAt}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-primary rb-restore" data-idx="${idx}">♻️ Bərpa et</button>
+            <button class="btn-ghost rb-del" data-idx="${idx}" style="color:#f87171;">✕</button>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.rb-restore').forEach(btn => {
+        btn.onclick = () => {
+          const i = +btn.dataset.idx;
+          const item = binItems[i];
+          if (!item) return;
+          if (typeof vfs !== 'undefined') {
+            if (item.type === 'Qovluq' && !vfs.folders.includes(item.name)) {
+              vfs.folders.push(item.name);
+            } else if (item.type === 'Fayl') {
+              vfs.files[item.name] = item.content ?? '';
+            }
+            if (typeof renderVfs === 'function') renderVfs();
+          }
+          binItems.splice(i, 1);
+          saveBin();
+          renderRecycleBin();
+          if (window.notify) notify('♻️ Bərpa edildi', `"${item.name}" geri qaytarıldı.`);
+        };
+      });
+
+      list.querySelectorAll('.rb-del').forEach(btn => {
+        btn.onclick = () => {
+          const i = +btn.dataset.idx;
+          binItems.splice(i, 1);
+          saveBin();
+          renderRecycleBin();
+        };
+      });
+    };
+
+    if (typeof window.mkApp === 'function') {
+      window.mkApp(
+        'recyclebin',
+        '🗑️',
+        'Zibil Qutusu',
+        'Zibil Qutusu (Recycle Bin)',
+        560,
+        430,
+        `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <div style="font-size:12px;color:#94a3b8;">Element sayı: <b id="rb-count" style="color:#38bdf8;">0</b></div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-ghost" id="rb-test-add">+ Test faylı at</button>
+              <button class="btn-primary" id="rb-empty" style="background:#dc2626;">🗑️ Zibil qutusunu boşalt</button>
+            </div>
+          </div>
+          <div id="rb-list"></div>
+        `,
+        () => {
+          document.getElementById('rb-test-add').onclick = () => {
+            window.moveToRecycleBin({
+              type: 'Fayl',
+              name: 'kohne_hesabat_' + Math.floor(Math.random() * 90 + 10) + '.txt',
+              content: 'Silinmiş test qeydi.'
+            });
+          };
+          document.getElementById('rb-empty').onclick = () => {
+            if (!binItems.length) return;
+            if (confirm('Zibil qutusundakı bütün elementlər həmişəlik silinsin?')) {
+              binItems = [];
+              saveBin();
+              renderRecycleBin();
+              if (window.notify) notify('🗑️ Boşaldıldı', 'Zibil qutusu təmizləndi.');
+            }
+          };
+          renderRecycleBin();
+        }
+      );
+    }
+
+    // This PC-dəki fayl/qovluqları zibil qutusuna atmaq üçün sürətli düymə əlavə edir
+    const origRenderVfs = window.renderVfs;
+    if (typeof origRenderVfs === 'function') {
+      window.renderVfs = function () {
+        origRenderVfs();
+        const box = document.getElementById('vfs-list');
+        if (!box || typeof vfs === 'undefined') return;
+        box.querySelectorAll('.card').forEach(card => {
+          if (card.querySelector('.vfs-trash-btn')) return;
+          const labelText = card.children[1]?.textContent?.trim();
+          if (!labelText) return;
+          const isFolder = vfs.folders.includes(labelText);
+          const btn = document.createElement('button');
+          btn.className = 'btn-ghost vfs-trash-btn';
+          btn.style.cssText = 'margin-top:6px;padding:2px 6px;font-size:10.5px;color:#fca5a5;';
+          btn.textContent = '🗑️ Sil';
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            if (isFolder) {
+              vfs.folders = vfs.folders.filter(x => x !== labelText);
+              window.moveToRecycleBin({ type: 'Qovluq', name: labelText });
+            } else {
+              const content = vfs.files[labelText] ?? '';
+              delete vfs.files[labelText];
+              window.moveToRecycleBin({ type: 'Fayl', name: labelText, content });
+            }
+            window.renderVfs();
+          };
+          card.appendChild(btn);
+        });
+      };
+    }
+
+    updateBinBadge();
+  })();
+</script>
 </html>
