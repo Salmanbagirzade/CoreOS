@@ -4399,5 +4399,124 @@ ${c.tbalign == 'left' ? '.tb-center{order:-1}.tb-left{order:1}.tb-right{margin-l
       }
     }, 650);
   })();
+</script><script>
+  /* ===== CoreOS Bonus Modul: NetAudit (ARP/Port Diaqnostika) & Yumşaq Səs Effektləri ===== */
+  (function () {
+    const B_KEY = 'coreos_bonus_mod_v1';
+    let bState = {
+      soundEnabled: true,
+      lastScanTarget: '192.168.1.1'
+    };
+
+    try {
+      Object.assign(bState, JSON.parse(localStorage.getItem(B_KEY) || '{}'));
+    } catch (e) {}
+
+    const saveBonus = () => {
+      try { localStorage.setItem(B_KEY, JSON.stringify(bState)); } catch (e) {}
+    };
+
+    // Web Audio API ilə xarici faylsız yumşaq klik / bildiriş səsi
+    let audioCtx = null;
+    function playTone(freq = 620, duration = 0.045, type = 'sine', gainVal = 0.03) {
+      if (!bState.soundEnabled) return;
+      try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('button, .win-icon, .w11s-nav-item, .mc-nav-btn')) {
+        playTone(680, 0.035, 'triangle', 0.025);
+      }
+    }, true);
+
+    const origNotify = window.notify;
+    if (typeof origNotify === 'function') {
+      window.notify = function (title, body) {
+        playTone(880, 0.09, 'sine', 0.035);
+        return origNotify(title, body);
+      };
+    }
+
+    if (typeof window.mkApp === 'function') {
+      window.mkApp(
+        'netaudit',
+        '🛰️',
+        'NetAudit',
+        'CoreOS NetAudit — ARP Cədvəli və Port Diaqnostikası',
+        700,
+        470,
+        `
+          <div class="card">
+            <b style="color:#38bdf8;">ARP Cədvəli və Lokal Şəbəkə Cihazları</b>
+            <div style="margin-top:8px;overflow-x:auto;">
+              <table class="win-table" style="width:100%;font-size:12px;">
+                <thead>
+                  <tr><th>IP Ünvanı</th><th>MAC Ünvanı</th><th>Cihaz / Rol</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>192.168.1.1</td><td>A4:2B:8C:10:44:01</td><td>GPON / Router Gateway</td><td style="color:#4ade80;">Active</td></tr>
+                  <tr><td>192.168.1.10</td><td>3C:7A:81:90:22:18</td><td>L2 Switch / Access Point</td><td style="color:#4ade80;">Active</td></tr>
+                  <tr><td>192.168.1.105</td><td>D8:BB:C1:4F:19:77</td><td>ASUS Vivobook S 16 (CoreOS)</td><td style="color:#38bdf8;">Local Host</td></tr>
+                  <tr><td>192.168.1.124</td><td>70:5A:0F:61:88:3A</td><td>Network Printer / IoT Node</td><td style="color:#facc15;">Idle</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <b style="color:#38bdf8;">Sürətli TCP Port Yoxlaması</b>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+              <input id="na-host" class="inp" value="${bState.lastScanTarget}" style="width:170px;" placeholder="IP və ya host">
+              <button class="btn-primary" id="na-scan-btn">🔍 Portları Yoxla (22, 53, 80, 443, 3389)</button>
+              <button class="btn-ghost" id="na-snd-btn">🔊 Səs: ${bState.soundEnabled ? 'AÇIQ' : 'BAĞLI'}</button>
+            </div>
+            <div id="na-out" style="margin-top:10px;font-family:Consolas,monospace;font-size:11.5px;background:#101520;border:1px solid #283247;border-radius:6px;padding:9px;color:#cbd5e1;line-height:1.55;">
+              [Hazır] Hədəf IP daxil edib port yoxlamasını başladın.
+            </div>
+          </div>
+        `,
+        () => {
+          const hostInp = document.getElementById('na-host');
+          const outEl = document.getElementById('na-out');
+          const sndBtn = document.getElementById('na-snd-btn');
+
+          document.getElementById('na-scan-btn').onclick = () => {
+            const target = (hostInp.value || '192.168.1.1').trim();
+            bState.lastScanTarget = target;
+            saveBonus();
+            outEl.innerHTML = `
+              <div style="color:#38bdf8;">Hədəf: <b>${target}</b></div>
+              <div>TCP 22 (SSH)   — <span style="color:#94a3b8;">filtered</span></div>
+              <div>TCP 53 (DNS)   — <span style="color:#4ade80;">open</span></div>
+              <div>TCP 80 (HTTP)  — <span style="color:#4ade80;">open</span></div>
+              <div>TCP 443 (HTTPS)— <span style="color:#4ade80;">open</span></div>
+              <div>TCP 3389 (RDP) — <span style="color:#f87171;">closed</span></div>
+            `;
+            if (window.notify) notify('🛰️ NetAudit', `${target} üzrə port skanı tamamlandı.`);
+          };
+
+          sndBtn.onclick = () => {
+            bState.soundEnabled = !bState.soundEnabled;
+            saveBonus();
+            sndBtn.textContent = `🔊 Səs: ${bState.soundEnabled ? 'AÇIQ' : 'BAĞLI'}`;
+            if (bState.soundEnabled) playTone(760, 0.08, 'sine', 0.04);
+          };
+        }
+      );
+    }
+  })();
 </script>
 </html>
