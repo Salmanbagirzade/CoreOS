@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <title>Windows 11 · Əməliyyat Sisteminin Təhlükəsizlik Auditi (Kşats-25/01)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    html, body {
+      width: 100vw;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden !important;
+      user-select: none;
+      background: #091322;
+      color: #f8fafc;
+    }
+
+    /* Windows 11 Təhlükəsizlik Audit Fonu */
+    .win-wallpaper {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 18% 22%, #0284c7 0%, #0f172a 48%, #050a14 100%);
+      z-index: 0;
+    }
+
+    /* İş Masası Sahəsi */
+    .desktop-area {
+      position: relative;
+      z-index: 10;
+      width: 100vw;
+      height: calc(100dvh - 48px);
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    /* Windows İkon Sütunları */
+    .desktop-icons {
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(5, 86px);
+      gap: 8px;
+    }
+    .win-icon {
+      width: 84px;
+      height: 82px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+      text-align: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .win-icon:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .win-icon:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .win-icon-glyph {
+      font-size: 27px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.65));
+    }
+    .win-icon-label {
+      font-size: 11px;
+      line-height: 1.2;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+      word-break: break-word;
+    }
+
+    /* Windows Pəncərələri */
+    .win-window {
+      position: fixed;
+      top: 5%;
+      left: 8%;
+      width: 82%;
+      height: calc(100dvh - 100px);
+      min-width: 320px;
+      min-height: 280px;
+      background: #161b26;
+      border: 1px solid #30394d;
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.78);
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .win-window.open {
+      display: flex;
+    }
+    .win-window.maximized {
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: calc(100dvh - 48px) !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    .win-titlebar {
+      height: 34px;
+      background: #1f2636;
+      border-bottom: 1px solid #2d3748;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 12px;
+      cursor: move;
+      flex-shrink: 0;
+    }
+    .win-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .win-controls {
+      display: flex;
+      height: 100%;
+    }
+    .win-btn {
+      width: 44px;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 13px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .win-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .win-btn.close:hover {
+      background: #e81123;
+      color: #fff;
+    }
+
+    /* Təmiz və Sadələşdirilmiş Windows 11 Taskbar (48px) */
+    .win-taskbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 48px;
+      background: rgba(20, 25, 35, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+    .tb-left, .tb-center, .tb-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tb-btn {
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #e2e8f0;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tb-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Start Menu */
+    .win-start {
+      position: fixed;
+      bottom: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440px;
+      max-width: calc(100vw - 20px);
+      background: rgba(26, 32, 44, 0.98);
+      backdrop-filter: blur(24px);
+      border: 1px solid #374151;
+      border-radius: 10px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      z-index: 60;
+      padding: 18px;
+      display: none;
+    }
+    .win-start.open {
+      display: block;
+    }
+
+    /* Ümumi Düymə və Kart Stilləri */
+    .btn-primary {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: #0369a1;
+    }
+    .btn-ghost {
+      background: #252d3d;
+      color: #e2e8f0;
+      border: 1px solid #374151;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background: #303a4f;
+    }
+    .card {
+      background: #1d2433;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 14px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #0284c7;
+      color: #fff;
+    }
+    .status-ok {
+      color: #4ade80;
+      font-weight: 600;
+    }
+    .status-warn {
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    .status-risk {
+      color: #f87171;
+      font-weight: 600;
+    }
+    table.win-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    table.win-table th, table.win-table td {
+      border: 1px solid #30394d;
+      padding: 7px 9px;
+      text-align: left;
+    }
+    table.win-table th {
+      background: #252e40;
+      color: #7dd3fc;
+    }
+
+    /* Lock Screen */
+    #win-lock {
+      position: fixed;
+      inset: 0;
+      background: #09111e;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    #win-lock.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <!-- Divar Kağızı -->
+  <div class="win-wallpaper"></div>
+
+  <!-- İŞ MASASI -->
+  <div class="desktop-area">
+    <div class="desktop-icons">
+      <!-- 1. Təhlükəsizlik Auditi Mövzuları & Test -->
+      <button class="win-icon" onclick="openWin('audit')">
+        <span class="win-icon-glyph">🛡️</span>
+        <span class="win-icon-label">Audit Mövzuları</span>
+      </button>
+
+      <!-- 2. İstifadəçi Hesabları Auditi -->
+      <button class="win-icon" onclick="openWin('users')">
+        <span class="win-icon-glyph">👥</span>
+        <span class="win-icon-label">Hesablar Auditi</span>
+      </button>
+
+      <!-- 3. Windows Yeniləmələr Auditi -->
+      <button class="win-icon" onclick="openWin('updates')">
+        <span class="win-icon-glyph">🔄</span>
+        <span class="win-icon-label">Yeniləmə Auditi</span>
+      </button>
+
+      <!-- 4. Security Policy & Firewall -->
+      <button class="win-icon" onclick="openWin('policy')">
+        <span class="win-icon-glyph">🔐</span>
+        <span class="win-icon-label">Təhlükəsizlik Siyasəti</span>
+      </button>
+
+      <!-- 5. Audit Terminalı (CMD / PowerShell) -->
+      <button class="win-icon" onclick="openWin('cmd')">
+        <span class="win-icon-glyph">⬛</span>
+        <span class="win-icon-label">Audit CMD</span>
+      </button>
+
+      <!-- 6. Audit Logları (Event Viewer) -->
+      <button class="win-icon" onclick="openWin('logs')">
+        <span class="win-icon-glyph">📋</span>
+        <span class="win-icon-label">Təhlükəsizlik Logu</span>
+      </button>
+
+      <!-- 7. Fayllar & Hesabatlar -->
+      <button class="win-icon" onclick="openWin('explorer')">
+        <span class="win-icon-glyph">📁</span>
+        <span class="win-icon-label">Hesabat Qovluğu</span>
+      </button>
+
+      <!-- 8. Qeyd Dəftəri (Audit Hesabatı) -->
+      <button class="win-icon" onclick="openWin('notepad')">
+        <span class="win-icon-glyph">📝</span>
+        <span class="win-icon-label">Audit Qeydi</span>
+      </button>
+
+      <!-- 9. Kalkulyator -->
+      <button class="win-icon" onclick="openWin('calc')">
+        <span class="win-icon-glyph">🧮</span>
+        <span class="win-icon-label">Calculator</span>
+      </button>
+
+      <!-- 10. Parametrlər -->
+      <button class="win-icon" onclick="openWin('settings')">
+        <span class="win-icon-glyph">⚙️</span>
+        <span class="win-icon-label">Settings</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. PƏNCƏRƏ: ƏMƏLİYYAT SİSTEMİNİN TƏHLÜKƏSİZLİK AUDİTİ MÖVZULARI & TEST -->
+  <div id="win-audit" class="win-window">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-audit')">
+      <div class="win-title">🛡️ Əməliyyat Sisteminin Təhlükəsizlik Parametrlərinin Auditi — Həsən (Kşats-25/01)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('audit')">—</button>
+        <button class="win-btn" onclick="maxWin('win-audit')">□</button>
+        <button class="win-btn close" onclick="closeWin('audit')">✕</button>
+      </div>
+    </div>
+    <div style="display:flex; flex:1; overflow:hidden;">
+      <div id="audit-sidebar" style="width:255px; background:#111622; border-right:1px solid #2d3748; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; flex-shrink:0;">
+        <div style="font-size:11px; color:#94a3b8; padding:4px 6px; font-weight:600;">AUDIT BÖLMƏLƏRİ</div>
+      </div>
+      <div id="audit-body" style="flex:1; padding:18px; overflow-y:auto; font-size:13px; line-height:1.55;"></div>
+    </div>
+  </div>
+
+  <!-- 2. PƏNCƏRƏ: İSTİFADƏÇİ HESAPLARI AUDİTİ -->
+  <div id="win-users" class="win-window" style="width:680px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-users')">
+      <div class="win-title">👥 İstifadəçi Hesabları və İcazələrin Auditi (lusrmgr.msc / net user)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('users')">—</button>
+        <button class="win-btn close" onclick="closeWin('users')">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px;">
+      <p style="margin-top:0; color:#94a3b8;">Sistemdəki hesabların imtiyaz səviyyəsini, parol siyasətini və aktivliyini yoxlayın və riskli konfiqurasiyaları aradan qaldırın:</p>
+      <table class="win-table">
+        <thead>
+          <tr><th>İstifadəçi</th><th>Qrup / Rol</th><th>Vəziyyət</th><th>Audit Qeydi</th><th>Düzəliş</th></tr>
+        </thead>
+        <tbody id="users-tbody">
+          <tr>
+            <td><b>Administrator</b></td>
+            <td>Administrators</td>
+            <td id="adm-status" class="status-warn">Aktiv (Ad dəyişməyib)</td>
+            <td>Standart daxili hesab aktivdir; təhlükəsizlik üçün adının dəyişdirilməsi və ya məhdudlaşdırılması tövsiyə olunur.</td>
+            <td><button class="btn-ghost" onclick="fixAdmin()">Təhlükəsizləşdir</button></td>
+          </tr>
+          <tr>
+            <td><b>Hesen</b></td>
+            <td>Administrators</td>
+            <td class="status-ok">Aktiv (UAC Aktiv)</td>
+            <td>Əsas istifadəçi hesabı · UAC standart səviyyədədir.</td>
+            <td><span class="status-ok">Uyğundur</span></td>
+          </tr>
+          <tr>
+            <td><b>Guest</b></td>
+            <td>Guests</td>
+            <td id="guest-status" class="status-risk">Aktiv (Risk!)</td>
+            <td>Qonaq hesabı açıq qalıb — icazəsiz lokal giriş riski yaradır.</td>
+            <td><button class="btn-primary" style="background:#dc2626;" onclick="disableGuest()">Deaktiv et</button></td>
+          </tr>
+          <tr>
+            <td><b>temp_user</b></td>
+            <td>Users</td>
+            <td id="temp-status" class="status-warn">Parolsuz / Köhnə</td>
+            <td>Son giriş 90 gündən çoxdur, parol tələbi zəifdir.</td>
+            <td><button class="btn-ghost" onclick="lockTempUser()">Hesabı bağla</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. PƏNCƏRƏ: ƏMƏLİYYAT SİSTEMİ YENİLƏMƏLƏRİ AUDİTİ -->
+  <div id="win-updates" class="win-window" style="width:660px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-updates')">
+      <div class="win-title">🔄 Windows Update və Yamaq (Patch) Auditi</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('updates')">—</button>
+        <button class="win-btn close" onclick="closeWin('updates')">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px;">
+      <div class="card" style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:600; color:#7dd3fc;">Yeniləmə Vəziyyəti</div>
+          <div id="upd-summary" style="margin-top:4px; color:#cbd5e1;">2 kritik təhlükəsizlik yaması (KB5034441, KB5035853) quraşdırılmayıb.</div>
+        </div>
+        <button class="btn-primary" onclick="installPatches()">Yamaqları Quraşdır</button>
+      </div>
+      <table class="win-table">
+        <thead><tr><th>Yamaq Kodu</th><th>Kateqoriya</th><th>Risk Səviyyəsi</th><th>Status</th></tr></thead>
+        <tbody id="upd-tbody">
+          <tr><td><b>KB5034441</b></td><td>WinRE Təhlükəsizlik Yaması</td><td class="status-risk">Yüksək</td><td id="u1" class="status-risk">Gözləyir</td></tr>
+          <tr><td><b>KB5035853</b></td><td>Kümülatıv Təhlükəsizlik Yeniləməsi</td><td class="status-warn">Orta</td><td id="u2" class="status-warn">Gözləyir</td></tr>
+          <tr><td><b>KB5034765</b></td><td>Malicious Software Removal Tool</td><td class="status-ok">Normal</td><td class="status-ok">Quraşdırılıb</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4. PƏNCƏRƏ: TƏHLÜKƏSİZLİK SİYASƏTİ & FIREWALL -->
+  <div id="win-policy" class="win-window" style="width:620px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-policy')">
+      <div class="win-title">🔐 Lokal Təhlükəsizlik Siyasəti (secpol.msc) və Firewall</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('policy')">—</button>
+        <button class="win-btn close" onclick="closeWin('policy')">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px; display:flex; flex-direction:column; gap:10px;">
+      <div class="card">
+        <b>Minimum Parol Uzunluğu:</b> 12 simvol · <b>Parol Mürəkkəbliyi:</b> <span class="status-ok">Aktiv</span> · <b>Hesab Bloklanması:</b> 5 uğursuz cəhddən sonra 15 dəqiqə.
+      </div>
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div><b>Windows Defender Firewall (Domain / Private / Public):</b> <span id="fw-state" class="status-ok">Aktivdir</span></div>
+        <button class="btn-ghost" onclick="toggleFw()">Dəyişdir</button>
+      </div>
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div><b>UAC (User Account Control):</b> <span id="uac-state" class="status-ok">Aktiv (Prompt on secure desktop)</span></div>
+        <button class="btn-ghost" onclick="toggleUac()">Dəyişdir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. PƏNCƏRƏ: AUDIT TERMİNALI (CMD) -->
+  <div id="win-cmd" class="win-window">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-cmd')">
+      <div class="win-title">⬛ Təhlükəsizlik Auditi Terminalı (Administrator)</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('cmd')">—</button>
+        <button class="win-btn" onclick="maxWin('win-cmd')">□</button>
+        <button class="win-btn close" onclick="closeWin('cmd')">✕</button>
+      </div>
+    </div>
+    <div onclick="document.getElementById('cmd-in').focus()" style="flex:1; background:#0b0f17; color:#e2e8f0; font-family:Consolas, monospace; font-size:12.5px; padding:14px; overflow-y:auto;">
+      <div id="cmd-out">
+        <div>Windows Security Audit Shell — İstifadəçi: <b>Hesen</b></div>
+        <div style="color:#7dd3fc; margin-bottom:8px;">Audit əmrlərini sınayın: <b>help</b>, <b>whoami</b>, <b>net user</b>, <b>net accounts</b>, <b>wmic qfe</b>, <b>auditpol</b>, <b>gpresult</b>, <b>cls</b></div>
+      </div>
+      <form onsubmit="execCmd(event)" style="display:flex; gap:6px; margin-top:6px;">
+        <span style="color:#4ade80;">C:\Audit\Hesen&gt;</span>
+        <input id="cmd-in" type="text" autocomplete="off" style="flex:1; background:transparent; border:none; outline:none; color:#fff; font-family:Consolas, monospace; font-size:12.5px;" placeholder="net user, net accounts, wmic qfe, auditpol, whoami...">
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. PƏNCƏRƏ: TƏHLÜKƏSİZLİK LOGLARI -->
+  <div id="win-logs" class="win-window" style="width:640px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-logs')">
+      <div class="win-title">📋 Security &amp; System Audit Logları</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('logs')">—</button>
+        <button class="win-btn close" onclick="closeWin('logs')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12px;">
+      <table class="win-table">
+        <thead><tr><th>Event ID</th><th>Kateqoriya</th><th>Təsviri</th></tr></thead>
+        <tbody>
+          <tr><td><b>4624</b></td><td>Logon</td><td>Hesaba uğurlu daxil olma qeydə alındı (Audit Success).</td></tr>
+          <tr><td><b>4625</b></td><td>Logon Failure</td><td>Uğursuz giriş cəhdi — səhv parol / bloklama siyasəti test edildi.</td></tr>
+          <tr><td><b>4720</b></td><td>Account Mgmt</td><td>Yeni istifadəçi hesabı yaradıldı (Audit).</td></tr>
+          <tr><td><b>4732</b></td><td>Privilege Use</td><td>İstifadəçi təhlükəsizlik qrupuna (məs. Administrators) əlavə edildi.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 7. PƏNCƏRƏ: HESABAT QOVLUĞU -->
+  <div id="win-explorer" class="win-window" style="width:620px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-explorer')">
+      <div class="win-title">📁 Hesabat Qovluğu — C:\Audit\Hesen</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('explorer')">—</button>
+        <button class="win-btn close" onclick="closeWin('explorer')">✕</button>
+      </div>
+    </div>
+    <div style="padding:14px; overflow-y:auto; flex:1; font-size:12.5px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-weight:600; color:#7dd3fc;">Audit Sənədləri</span>
+        <button class="btn-ghost" onclick="createReportFile()">+ Yeni Hesabat Faylı</button>
+      </div>
+      <div id="file-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px;"></div>
+    </div>
+  </div>
+
+  <!-- 8. PƏNCƏRƏ: AUDIT QEYD DƏFTƏRİ -->
+  <div id="win-notepad" class="win-window" style="width:520px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-notepad')">
+      <div class="win-title">📝 Audit Qeydləri</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('notepad')">—</button>
+        <button class="win-btn close" onclick="closeWin('notepad')">✕</button>
+      </div>
+    </div>
+    <div style="padding:8px; background:#1f2636; border-bottom:1px solid #2d3748; display:flex; gap:8px;">
+      <input id="np-filename" value="tehlukesizlik_auditi.txt" style="background:#111622; border:1px solid #30394d; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px; width:190px;">
+      <button class="btn-primary" onclick="saveNote()">Yadda saxla</button>
+    </div>
+    <textarea id="np-content" style="flex:1; background:#111622; color:#e2e8f0; border:none; outline:none; padding:12px; font-family:Consolas, monospace; font-size:12.5px; resize:none;" placeholder="İstifadəçi hesabları və yeniləmələr üzrə audit nəticələrini yazın..."></textarea>
+  </div>
+
+  <!-- 9. PƏNCƏRƏ: CALCULATOR -->
+  <div id="win-calc" class="win-window" style="width:280px; height:360px;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-calc')">
+      <div class="win-title">🧮 Calculator</div>
+      <div class="win-controls">
+        <button class="win-btn close" onclick="closeWin('calc')">✕</button>
+      </div>
+    </div>
+    <div style="padding:10px; display:flex; flex-direction:column; flex:1; gap:8px;">
+      <input id="calc-disp" readonly value="0" style="width:100%; background:#0f131a; border:1px solid #30394d; color:#fff; font-size:22px; text-align:right; padding:10px; border-radius:6px; font-family:Consolas, monospace;">
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; flex:1;">
+        <button class="btn-ghost" onclick="cClr()">C</button><button class="btn-ghost" onclick="cAdd('(')">(</button><button class="btn-ghost" onclick="cAdd(')')">)</button><button class="btn-ghost" onclick="cAdd('/')">÷</button>
+        <button class="btn-ghost" onclick="cAdd('7')">7</button><button class="btn-ghost" onclick="cAdd('8')">8</button><button class="btn-ghost" onclick="cAdd('9')">9</button><button class="btn-ghost" onclick="cAdd('*')">×</button>
+        <button class="btn-ghost" onclick="cAdd('4')">4</button><button class="btn-ghost" onclick="cAdd('5')">5</button><button class="btn-ghost" onclick="cAdd('6')">6</button><button class="btn-ghost" onclick="cAdd('-')">−</button>
+        <button class="btn-ghost" onclick="cAdd('1')">1</button><button class="btn-ghost" onclick="cAdd('2')">2</button><button class="btn-ghost" onclick="cAdd('3')">3</button><button class="btn-ghost" onclick="cAdd('+')">+</button>
+        <button class="btn-ghost" style="grid-column:span 2;" onclick="cAdd('0')">0</button><button class="btn-ghost" onclick="cAdd('.')">.</button><button class="btn-primary" onclick="cEq()">=</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. PƏNCƏRƏ: SETTINGS -->
+  <div id="win-settings" class="win-window" style="width:560px; max-width:94vw;">
+    <div class="win-titlebar" onmousedown="dragWin(event, 'win-settings')">
+      <div class="win-title">⚙️ Settings — Sistem və Təhlükəsizlik</div>
+      <div class="win-controls">
+        <button class="win-btn" onclick="minWin('settings')">—</button>
+        <button class="win-btn close" onclick="closeWin('settings')">✕</button>
+      </div>
+    </div>
+    <div style="padding:16px; overflow-y:auto; flex:1; font-size:12.5px; display:flex; flex-direction:column; gap:12px;">
+      <div class="card">
+        <div style="font-weight:600; color:#7dd3fc; margin-bottom:6px;">💻 Sistem və İstifadəçi Məlumatları</div>
+        <div><b>İstifadəçi:</b> Həsən · <b>Qrup:</b> Kşats-25/01</div>
+        <div><b>Mövzu:</b> Əməliyyat sisteminin təhlükəsizlik parametrlərinin (istifadəçi hesabları, yeniləmələr) auditi</div>
+        <div><b>Əməliyyat sistemi:</b> Windows 11 Audit Lab</div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600; color:#7dd3fc; margin-bottom:6px;">🖼️ Divar Kağızı</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 18% 22%, #0284c7 0%, #0f172a 48%, #050a14 100%)')">Okean Göyü</button>
+          <button class="btn-ghost" onclick="setBg('radial-gradient(circle at 80% 20%, #0d9488 0%, #0f172a 55%, #050a14 100%)')">Zümrüd Yaşılı</button>
+          <button class="btn-ghost" onclick="setBg('#090d16')">Tünd Audit</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600; color:#7dd3fc; margin-bottom:6px;">🔒 Ekran Kilidi PIN Kodu</div>
+        <div style="display:flex; gap:8px;">
+          <input id="pin-set" type="password" placeholder="Yeni PIN" style="background:#111622; border:1px solid #30394d; color:#fff; padding:6px 10px; border-radius:4px;">
+          <button class="btn-primary" onclick="savePin()">Saxla</button>
+          <button class="btn-ghost" onclick="lockPc()">Kilidlə</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- START MENU -->
+  <div id="win-start" class="win-start">
+    <div style="font-size:12px; font-weight:600; color:#7dd3fc; margin-bottom:10px;">Təhlükəsizlik Auditi Alətləri</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;">
+      <button class="win-icon" style="width:100%;" onclick="openWin('audit'); toggleStart(false);"><span class="win-icon-glyph">🛡️</span><span class="win-icon-label">Mövzular</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('users'); toggleStart(false);"><span class="win-icon-glyph">👥</span><span class="win-icon-label">Hesablar</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('updates'); toggleStart(false);"><span class="win-icon-glyph">🔄</span><span class="win-icon-label">Yeniləmə</span></button>
+      <button class="win-icon" style="width:100%;" onclick="openWin('cmd'); toggleStart(false);"><span class="win-icon-glyph">⬛</span><span class="win-icon-label">Audit CMD</span></button>
+    </div>
+    <div style="border-top:1px solid #30394d; padding-top:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+      <span>👤 <b>Həsən</b> (Kşats-25/01)</span>
+      <button class="btn-ghost" onclick="lockPc()">🔒 Kilidlə</button>
+    </div>
+  </div>
+
+  <!-- KİLİD EKRANI -->
+  <div id="win-lock">
+    <div id="lk-time" style="font-size:64px; font-weight:300;">10:07</div>
+    <div style="font-size:18px; font-weight:600; margin:10px 0 14px;">Həsən</div>
+    <form onsubmit="unlockPc(event)" style="display:flex; gap:8px;">
+      <input id="pin-in" type="password" placeholder="PIN (boşsa Enter)" style="background:#1e293b; border:1px solid #475569; color:#fff; padding:8px 14px; border-radius:6px; outline:none;">
+      <button type="submit" class="btn-primary">Daxil ol</button>
+    </form>
+  </div>
+
+  <!-- TƏMİZ WINDOWS 11 TASKBAR (SAĞDA WIDGET YOXDUR) -->
+  <footer class="win-taskbar">
+    <div class="tb-left">
+      <span style="font-size:11.5px; color:#94a3b8; padding-left:4px;">Həsən · OS Security Audit</span>
+    </div>
+
+    <div class="tb-center">
+      <button class="tb-btn" onclick="toggleStart()" title="Start">
+        <span style="display:grid; grid-template-columns:repeat(2,6px); gap:1.5px;">
+          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
+          <span style="width:6px; height:6px; background:#38bdf8;"></span><span style="width:6px; height:6px; background:#38bdf8;"></span>
+        </span>
+      </button>
+      <button class="tb-btn" onclick="toggleWin('audit')" title="Audit Mövzuları">🛡️</button>
+      <button class="tb-btn" onclick="toggleWin('users')" title="Hesablar Auditi">👥</button>
+      <button class="tb-btn" onclick="toggleWin('updates')" title="Yeniləmə Auditi">🔄</button>
+      <button class="tb-btn" onclick="toggleWin('policy')" title="Təhlükəsizlik Siyasəti">🔐</button>
+      <button class="tb-btn" onclick="toggleWin('cmd')" title="Audit CMD">⬛</button>
+      <button class="tb-btn" onclick="toggleWin('settings')" title="Settings">⚙️</button>
+    </div>
+
+    <div class="tb-right" style="font-size:11.5px;">
+      <span id="tb-score" style="background:#0284c7; padding:2px 8px; border-radius:4px; font-weight:600; cursor:pointer;" onclick="openWin('audit')">Test: 0%</span>
+      <div style="text-align:right; line-height:1.2; padding:0 4px;">
+        <div id="tb-time">10:07</div>
+        <div id="tb-date" style="font-size:10px; color:#94a3b8;">27.11.2026</div>
+      </div>
+      <button class="tb-btn" style="padding:0 6px;" onclick="minAll()" title="Show Desktop">|</button>
+    </div>
+  </footer>
+
+  <script>
+    const auditModules = [
+      {
+        title: "1. Təhlükəsizlik Auditinin Mahiyyəti",
+        badge: "OS Security Audit",
+        theory: "Əməliyyat sisteminin təhlükəsizlik auditi sistem parametrlərinin, istifadəçi hesablarının, icazələrin, audit siyasətlərinin və yeniləmələrin təhlükəsizlik standartlarına uyğunluğunun sistematik yoxlanılmasıdır.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Audit Sahəsi</th><th>Yoxlanan Parametrlər</th><th>Məqsəd</th></tr></thead>
+            <tbody>
+              <tr><td><b>İstifadəçi Hesabları</b></td><td>Admin sayı, Guest hesabı, parol siyasəti</td><td>İcazəsiz giriş və imtiyaz yüksəltmənin qarşısını almaq</td></tr>
+              <tr><td><b>Yeniləmələr (Updates)</b></td><td>Təhlükəsizlik yamaları (KB), avtomatik yeniləmə</td><td>Məlum boşluqların (CVE) vaxtında bağlanması</td></tr>
+              <tr><td><b>Audit Logları</b></td><td>Event ID 4624, 4625, 4720, 4732</td><td>Hadisələrin izlənməsi və insident analizi</td></tr>
+            </tbody>
+          </table>`,
+        practice: "Audit zamanı əvvəlcə mövcud vəziyyət (Baseline) qeydə alınır, uyğunsuzluqlar aşkarlanır və düzəlişdən sonra təkrar yoxlama aparılır.",
+        questions: [
+          {
+            q: "Əməliyyat sisteminin təhlükəsizlik auditinin əsas məqsədi nədir?",
+            opts: ["Parametrlərin və hesabların təhlükəsizliyini yoxlamaq", "Yalnız ekran qətnaməsini artırmaq", "Diskdəki bütün faylları silmək"],
+            ans: 0
+          }
+        ]
+      },
+      {
+        title: "2. İstifadəçi Hesabları və İmtiyazlar",
+        badge: "IAM & Least Privilege",
+        theory: "Ən az imtiyaz prinsipi (Principle of Least Privilege) hər istifadəçiyə yalnız öz işini görmək üçün lazım olan minimum hüquqların verilməsini tələb edir.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Hesab / Parametr</th><th>Riskli Hal</th><th>Təhlükəsiz Konfiqurasiya</th></tr></thead>
+            <tbody>
+              <tr><td><b>Guest Hesabı</b></td><td>Aktiv saxlanılması</td><td>Deaktiv (Disabled) vəziyyətdə saxlanılmalıdır</td></tr>
+              <tr><td><b>Gündəlik İş Hesabı</b></td><td>Daimi Administrator hüququ</td><td>Standart istifadəçi + lazım olduqda UAC təsdiqi</td></tr>
+              <tr><td><b>Parol Siyasəti</b></td><td>Qısa və ya boş parol</td><td>Uzun, mürəkkəb parol və bloklama qaydası</td></tr>
+            </tbody>
+          </table>`,
+        practice: "İstifadəçi hesablarını yoxlamaq üçün 'net user' və parol/bloklama qaydalarını görmək üçün 'net accounts' əmrlərindən istifadə olunur.",
+        questions: [
+          {
+            q: "Ən az imtiyaz (Least Privilege) prinsipinə görə Guest hesabı necə olmalıdır?",
+            opts: ["Aktiv və parolsuz", "Deaktiv vəziyyətdə", "Hər kəs üçün Administrator kimi"],
+            ans: 1
+          },
+          {
+            q: "İstifadəçi hesablarını siyahılamaq üçün əmr sətrində hansı əmr işlədilir?",
+            opts: ["net user", "ipconfig", "chkdsk"],
+            ans: 0
+          }
+        ]
+      },
+      {
+        title: "3. Əməliyyat Sistemi Yeniləmələrinin Auditi",
+        badge: "Patch Management",
+        theory: "Yeniləmələrin auditi quraşdırılmış təhlükəsizlik yamaqlarının (Hotfix / KB) aktuallığını, uğursuz yeniləmələrin olub-olmadığını və avtomatik yeniləmə mexanizminin işləkliyini yoxlayır.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Yoxlama Elementi</th><th>Nəticə</th><th>Tədbir</th></tr></thead>
+            <tbody>
+              <tr><td><b>Quraşdırılmış Yamaqlar</b></td><td>Köhnə versiya</td><td>Kritik təhlükəsizlik yeniləmələrini tətbiq etmək</td></tr>
+              <tr><td><b>Avtomatik Yeniləmə</b></td><td>Söndürülüb</td><td>Təhlükəsizlik yeniləmələrini aktivləşdirmək</td></tr>
+              <tr><td><b>Yenidən Başlatma</b></td><td>Gözləmədə</td><td>Yamaqların tam qüvvəyə minməsi üçün Restart etmək</td></tr>
+            </tbody>
+          </table>`,
+        practice: "Yeniləmələrin quraşdırılma siyahısını yoxlamaq üçün 'wmic qfe' əmri ilə tarixçəyə baxmaq mümkündür.",
+        questions: [
+          {
+            q: "Quraşdırılmış yeniləmələri yoxlamaq üçün hansı əmr nümunəsi istifadə olunur?",
+            opts: ["wmic qfe", "arp -d", "ping localhost"],
+            ans: 0
+          }
+        ]
+      },
+      {
+        title: "4. Audit Siyasəti və Logların Təhlili",
+        badge: "Audit Policy & Logs",
+        theory: "Audit siyasəti (auditpol) uğurlu və uğursuz giriş cəhdlərini, hesab dəyişikliklərini və imtiyaz istifadəsini qeydə alır.",
+        table: `
+          <table class="win-table">
+            <thead><tr><th>Event ID</th><th>Mənası</th><th>Audit Əhəmiyyəti</th></tr></thead>
+            <tbody>
+              <tr><td><b>4624</b></td><td>Uğurlu daxil olma</td><td>Kim və nə vaxt sistemə daxil olduğunu göstərir</td></tr>
+              <tr><td><b>4625</b></td><td>Uğursuz daxil olma</td><td>Brute-force və ya yanlış giriş cəhdlərini aşkarlayır</td></tr>
+              <tr><td><b>4720 / 4732</b></td><td>Hesab / Qrup dəyişikliyi</td><td>Yeni hesab və ya admin hüququ verilməsini izləyir</td></tr>
+            </tbody>
+          </table>`,
+        practice: "Event ID 4625 qeydlərinin artması şübhəli giriş cəhdlərinin əlaməti ola bilər və dərhal araşdırılmalıdır.",
+        questions: [
+          {
+            q: "Uğursuz giriş cəhdini göstərən tipik Windows təhlükəsizlik Event ID hansıdır?",
+            opts: ["4625", "100", "8080"],
+            ans: 0
+          }
+        ]
+      }
+    ];
+
+    const answers = {};
+    const auditFiles = {
+      'hesab_auditi.txt': 'İstifadəçi: Hesen (Kşats-25/01)\nHesablar və parol siyasəti yoxlanıldı.',
+      'yenileme_siyahi.txt': 'KB5034765 quraşdırılıb. Kritik yamaqlar nəzarətdədir.'
+    };
+
+    function initAuditModules() {
+      const sb = document.getElementById('audit-sidebar');
+      auditModules.forEach((m, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-ghost';
+        btn.style.textAlign = 'left';
+        btn.style.fontSize = '11.5px';
+        btn.id = 'aud-nav-' + idx;
+        btn.textContent = m.title;
+        btn.onclick = () => renderAuditModule(idx);
+        sb.appendChild(btn);
+      });
+      renderAuditModule(0);
+    }
+
+    function renderAuditModule(idx) {
+      auditModules.forEach((_, i) => {
+        const el = document.getElementById('aud-nav-' + i);
+        el.style.background = i === idx ? '#0284c7' : '#252d3d';
+        el.style.borderColor = i === idx ? '#38bdf8' : '#374151';
+      });
+      const m = auditModules[idx];
+      document.getElementById('audit-body').innerHTML = `
+        <span class="badge">${m.badge}</span>
+        <h2 style="margin:8px 0 6px; font-size:18px;">${m.title}</h2>
+        <p style="color:#cbd5e1; margin-top:0;">${m.theory}</p>
+        ${m.table}
+        <div class="card" style="margin-top:12px; border-left:3px solid #38bdf8;">
+          <b style="color:#7dd3fc;">🔎 Audit Praktikası:</b> ${m.practice}
+        </div>
+        <div class="card" style="margin-top:12px; border-left:3px solid #22c55e;">
+          <b style="color:#4ade80;">✅ Özünü Yoxla:</b>
+          ${m.questions.map((qItem, qIdx) => `
+            <div style="margin-top:10px;">
+              <div style="font-weight:600; margin-bottom:6px;">${qIdx + 1}. ${qItem.q}</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${qItem.opts.map((opt, oIdx) => `
+                  <button class="btn-ghost" onclick="checkQuiz(${idx}, ${qIdx}, ${oIdx}, this)">${opt}</button>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function checkQuiz(mIdx, qIdx, oIdx, btn) {
+      const ok = auditModules[mIdx].questions[qIdx].ans === oIdx;
+      btn.parentElement.querySelectorAll('button').forEach(b => b.style.background = '#252d3d');
+      btn.style.background = ok ? '#15803d' : '#b91c1c';
+      answers[`${mIdx}-${qIdx}`] = ok;
+
+      const total = auditModules.reduce((acc, item) => acc + item.questions.length, 0);
+      const correct = Object.values(answers).filter(Boolean).length;
+      const pct = Math.round((correct / total) * 100);
+      document.getElementById('tb-score').textContent = `Test: ${pct}%`;
+    }
+
+    function disableGuest() {
+      const el = document.getElementById('guest-status');
+      el.textContent = 'Deaktiv edildi';
+      el.className = 'status-ok';
+    }
+    function fixAdmin() {
+      const el = document.getElementById('adm-status');
+      el.textContent = 'Nəzarətə alındı';
+      el.className = 'status-ok';
+    }
+    function lockTempUser() {
+      const el = document.getElementById('temp-status');
+      el.textContent = 'Bloklandı';
+      el.className = 'status-ok';
+    }
+    function installPatches() {
+      document.getElementById('u1').textContent = 'Quraşdırıldı';
+      document.getElementById('u1').className = 'status-ok';
+      document.getElementById('u2').textContent = 'Quraşdırıldı';
+      document.getElementById('u2').className = 'status-ok';
+      document.getElementById('upd-summary').textContent = 'Bütün təhlükəsizlik yamaqları quraşdırılıb. Sistem yenidir.';
+    }
+    function toggleFw() {
+      const el = document.getElementById('fw-state');
+      const isOn = el.textContent.includes('Aktivdir');
+      el.textContent = isOn ? 'Söndürülüb (Risk!)' : 'Aktivdir';
+      el.className = isOn ? 'status-risk' : 'status-ok';
+    }
+    function toggleUac() {
+      const el = document.getElementById('uac-state');
+      const isOn = el.textContent.includes('Aktiv');
+      el.textContent = isOn ? 'Söndürülüb (Risk!)' : 'Aktiv (Prompt on secure desktop)';
+      el.className = isOn ? 'status-risk' : 'status-ok';
+    }
+
+    function renderFiles() {
+      const grid = document.getElementById('file-grid');
+      grid.innerHTML = '';
+      Object.keys(auditFiles).forEach(name => {
+        grid.innerHTML += `
+          <div class="card" style="text-align:center; cursor:pointer;" onclick="openNoteFile('${name}')">
+            <div style="font-size:22px;">📄</div>
+            <div style="margin-top:4px; word-break:break-all;">${name}</div>
+          </div>`;
+      });
+    }
+    function createReportFile() {
+      const name = prompt('Yeni fayl adı (məs: audit_2.txt):');
+      if (name) {
+        auditFiles[name] = '';
+        renderFiles();
+        openNoteFile(name);
+      }
+    }
+    function openNoteFile(name) {
+      document.getElementById('np-filename').value = name;
+      document.getElementById('np-content').value = auditFiles[name] || '';
+      openWin('notepad');
+    }
+    function saveNote() {
+      const name = document.getElementById('np-filename').value.trim() || 'audit_qeydi.txt';
+      auditFiles[name] = document.getElementById('np-content').value;
+      renderFiles();
+      alert(name + ' yadda saxlanıldı.');
+    }
+
+    function execCmd(e) {
+      e.preventDefault();
+      const inp = document.getElementById('cmd-in');
+      const raw = inp.value.trim();
+      if (!raw) return;
+      const out = document.getElementById('cmd-out');
+      out.innerHTML += `<div><span style="color:#4ade80;">C:\\Audit\\Hesen&gt;</span> ${raw}</div>`;
+      const cmd = raw.split(/\s+/)[0].toLowerCase();
+
+      if (cmd === 'help') {
+        out.innerHTML += `<div style="color:#7dd3fc;">Əmrlər: whoami, net user, net accounts, wmic qfe, auditpol, gpresult, cls</div>`;
+      } else if (cmd === 'cls' || cmd === 'clear') {
+        out.innerHTML = '';
+      } else if (cmd === 'whoami') {
+        out.innerHTML += `<div>desktop-audit\\Hesen</div>`;
+      } else if (cmd === 'net') {
+        out.innerHTML += `<pre style="margin:4px 0;">İstifadəçi hesabları:\nAdministrator            Hesen                    Guest (Disabled)         temp_user</pre>`;
+      } else if (cmd === 'wmic') {
+        out.innerHTML += `<pre style="margin:4px 0;">HotFixID    Description         InstalledOn\nKB5034765   Security Update     11/20/2026</pre>`;
+      } else if (cmd === 'auditpol') {
+        out.innerHTML += `<pre style="margin:4px 0;">Logon/Logoff: Success and Failure\nAccount Management: Success and Failure</pre>`;
+      } else if (cmd === 'gpresult') {
+        out.innerHTML += `<div>İstifadəçi: Hesen · Təhlükəsizlik siyasəti tətbiq edilib.</div>`;
+      } else {
+        out.innerHTML += `<div style="color:#f87171;">'${cmd}' tanınmadı. 'help' yazın.</div>`;
+      }
+      inp.value = '';
+    }
+
+    let zIdx = 40;
+    function openWin(id) {
+      const w = document.getElementById('win-' + id);
+      if (!w) return;
+      w.classList.add('open');
+      w.style.zIndex = ++zIdx;
+      if (id === 'explorer') renderFiles();
+    }
+    function closeWin(id) { document.getElementById('win-' + id).classList.remove('open'); }
+    function minWin(id) { document.getElementById('win-' + id).classList.remove('open'); }
+    function toggleWin(id) {
+      const w = document.getElementById('win-' + id);
+      w.classList.contains('open') ? minWin(id) : openWin(id);
+    }
+    function maxWin(winId) { document.getElementById(winId).classList.toggle('maximized'); }
+    function minAll() { document.querySelectorAll('.win-window').forEach(w => w.classList.remove('open')); }
+
+    function dragWin(e, winId) {
+      if (e.target.tagName === 'BUTTON') return;
+      const w = document.getElementById(winId);
+      if (w.classList.contains('maximized')) return;
+      w.style.zIndex = ++zIdx;
+      const dx = e.clientX - w.offsetLeft, dy = e.clientY - w.offsetTop;
+      function mv(ev) {
+        w.style.left = Math.max(0, ev.clientX - dx) + 'px';
+        w.style.top = Math.max(0, ev.clientY - dy) + 'px';
+      }
+      function up() {
+        document.removeEventListener('mousemove', mv);
+        document.removeEventListener('mouseup', up);
+      }
+      document.addEventListener('mousemove', mv);
+      document.addEventListener('mouseup', up);
+    }
+
+    function toggleStart(force) {
+      const s = document.getElementById('win-start');
+      typeof force === 'boolean' ? s.classList.toggle('open', force) : s.classList.toggle('open');
+    }
+    function setBg(bg) {
+      document.querySelector('.win-wallpaper').style.background = bg;
+    }
+
+    function cAdd(v) {
+      const d = document.getElementById('calc-disp');
+      d.value = d.value === '0' ? v : d.value + v;
+    }
+    function cClr() { document.getElementById('calc-disp').value = '0'; }
+    function cEq() {
+      const d = document.getElementById('calc-disp');
+      try { d.value = Function('"use strict";return (' + d.value + ')')(); }
+      catch { d.value = 'Error'; }
+    }
+
+    let pinCode = '';
+    function savePin() {
+      pinCode = document.getElementById('pin-set').value;
+      alert('PIN yadda saxlanıldı.');
+    }
+    function lockPc() {
+      toggleStart(false);
+      document.getElementById('pin-in').value = '';
+      document.getElementById('win-lock').classList.add('active');
+    }
+    function unlockPc(e) {
+      e.preventDefault();
+      if (!pinCode || document.getElementById('pin-in').value === pinCode) {
+        document.getElementById('win-lock').classList.remove('active');
+      } else {
+        alert('PIN yanlışdır.');
+      }
+    }
+
+    function tick() {
+      const now = new Date();
+      const t = now.toTimeString().slice(0, 5);
+      const d = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + now.getFullYear();
+      document.getElementById('tb-time').textContent = t;
+      document.getElementById('tb-date').textContent = d;
+      document.getElementById('lk-time').textContent = t;
+    }
+    setInterval(tick, 1000);
+    tick();
+    initAuditModules();
+  </script>
+</body>
+</html>
